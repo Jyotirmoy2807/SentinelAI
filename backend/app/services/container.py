@@ -72,6 +72,7 @@ def build_service_container(db: Session) -> ServiceContainer:
         policy_version_repository,
         policy_deployment_repository,
         settings.opa_policy_bundle_path,
+        settings.opa_cli_path,
     )
 
     container = ServiceContainer(

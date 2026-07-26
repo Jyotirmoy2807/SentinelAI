@@ -1,9 +1,9 @@
-import { Background, Controls, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
+import { Background, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
 import { useEffect, useMemo } from "react";
 import { governanceEdges, governanceNodes } from "../../modules/execution/constants.js";
 import { useUiStore } from "../../store/uiStore.js";
 
-const fitViewOptions = { padding: 0.08, minZoom: 0.68, maxZoom: 1 };
+const fitViewOptions = { padding: 0.14, minZoom: 0.35, maxZoom: 0.92 };
 
 export function GovernanceGraphView({ statuses = {} }) {
   const selectNode = useUiStore((state) => state.selectNode);
@@ -31,7 +31,7 @@ export function GovernanceGraphView({ statuses = {} }) {
   }, [setEdges, statuses]);
 
   return (
-    <div className="h-[460px] min-w-0 rounded-lg border border-line bg-white">
+    <div className="h-[410px] min-w-0 rounded-lg border border-line bg-white">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -40,15 +40,18 @@ export function GovernanceGraphView({ statuses = {} }) {
         onNodeClick={(_, node) => selectNode(node.id)}
         fitView
         fitViewOptions={fitViewOptions}
-        minZoom={0.55}
-        maxZoom={1.2}
+        minZoom={0.35}
+        maxZoom={1}
         nodesDraggable={false}
         nodesConnectable={false}
+        panOnDrag={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
         elementsSelectable
         proOptions={{ hideAttribution: true }}
       >
         <Background color="#dbe3ef" gap={18} />
-        <Controls showInteractive={false} />
       </ReactFlow>
     </div>
   );
@@ -93,7 +96,7 @@ function nodeStyle(status) {
     borderRadius: 8,
     border: "1px solid #d8dee9",
     padding: 12,
-    width: 176,
+    width: 160,
     fontSize: 13,
     fontWeight: 700,
     color: "#172033"

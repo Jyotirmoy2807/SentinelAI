@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     opa_url: str = "http://localhost:8181"
     opa_decision_path: str = "/v1/data/sentinelai/governance/decision"
     opa_policy_bundle_path: str = "./app/policies/rego"
+    opa_cli_path: str = "opa"
     audit_sink: str = "sqlite-splunk"
     log_level: str = "INFO"
     request_timeout_seconds: int = Field(default=30, ge=1)

@@ -1,14 +1,14 @@
 export const governanceNodes = [
-  { id: "api_ingestion", label: "API Ingestion", position: { x: 0, y: 165 } },
-  { id: "request_normalization", label: "Request Normalization", position: { x: 205, y: 165 } },
-  { id: "agent_identity", label: "Agent Identity", position: { x: 410, y: 165 } },
-  { id: "risk_engine", label: "Risk Engine (NIST RMF)", position: { x: 615, y: 165 } },
-  { id: "policy_engine", label: "OPA Policy Engine", position: { x: 820, y: 165 } },
-  { id: "human_approval", label: "Human Approval", position: { x: 820, y: 20 } },
-  { id: "enterprise_execution", label: "Enterprise Execution", position: { x: 1025, y: 165 } },
-  { id: "audit_engine", label: "Audit (Splunk)", position: { x: 1025, y: 310 } },
-  { id: "explainability", label: "Explainability", position: { x: 615, y: 310 } },
-  { id: "response_builder", label: "Response Builder", position: { x: 410, y: 310 } }
+  { id: "api_ingestion", label: "API Ingestion", position: { x: 0, y: 60 } },
+  { id: "request_normalization", label: "Request Normalization", position: { x: 180, y: 60 } },
+  { id: "agent_identity", label: "Agent Identity", position: { x: 360, y: 60 } },
+  { id: "risk_engine", label: "Risk Engine (NIST RMF)", position: { x: 540, y: 60 } },
+  { id: "policy_engine", label: "OPA Policy Engine", position: { x: 720, y: 60 } },
+  { id: "human_approval", label: "Human Approval", position: { x: 540, y: 195 } },
+  { id: "enterprise_execution", label: "Enterprise Execution", position: { x: 720, y: 195 } },
+  { id: "audit_engine", label: "Audit (Splunk)", position: { x: 900, y: 195 } },
+  { id: "explainability", label: "Explainability", position: { x: 720, y: 330 } },
+  { id: "response_builder", label: "Response Builder", position: { x: 900, y: 330 } }
 ];
 
 export const governanceEdges = [

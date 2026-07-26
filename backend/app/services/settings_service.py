@@ -21,6 +21,7 @@ class SettingsService:
             "opa_url": self.settings.opa_url,
             "opa_decision_path": self.settings.opa_decision_path,
             "opa_policy_bundle_path": self.settings.opa_policy_bundle_path,
+            "opa_cli_path": self.settings.opa_cli_path,
             "audit_sink": self.settings.audit_sink,
             "log_level": self.settings.log_level,
         }
