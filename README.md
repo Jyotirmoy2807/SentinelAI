@@ -1,28 +1,46 @@
-# SentinelAI
+# SentinelAI v2
 
-SentinelAI is a prototype Enterprise AI Governance Platform. It demonstrates the documented governance workflow from Agent Passport identity through policy, firewall, risk, budget, compliance, human approval, audit, enterprise execution, explainability, and standardized response building.
+SentinelAI is a prototype Enterprise AI Governance Platform. Version 2 simplifies the governance layer around three enterprise-grade primitives:
+
+- Open Policy Agent (OPA) for policy decisions
+- NIST Risk Management Framework (RMF) alignment for risk assessment
+- Splunk-compatible structured JSON audit events for observability
+
+## Governance Pipeline
+
+```text
+START
+API Ingestion
+Request Normalization
+Agent Identity
+Risk Engine (NIST RMF)
+OPA Policy Engine
+  Deny -> Audit -> Explainability -> Response
+  Approval Required -> Human Approval -> Audit -> Explainability -> Response
+  Allow -> Enterprise Execution -> Audit -> Explainability -> Response
+END
+```
 
 ## Project Structure
 
 ```text
 backend/
   app/
-    api/            FastAPI REST and WebSocket surface
-    graph/          LangGraph orchestration and routing
-    graph/nodes/    One governance node per file
-    services/       Business logic and governance decisions
-    repositories/   CRUD-only persistence layer
-    models/         SQLAlchemy entities
-    schemas/        Pydantic DTOs
-    adapters/       Mock enterprise adapter layer
-    database/       SQLite setup and seed data
+    api/             FastAPI REST and WebSocket surface
+    graph/           LangGraph orchestration and routing
+    graph/nodes/     One governance node per stage
+    services/        Risk, OPA policy, audit, approval, execution, explainability
+    repositories/    CRUD-only persistence layer
+    models/          SQLAlchemy entities
+    schemas/         Pydantic DTOs
+    adapters/        OPA, Splunk-compatible audit sink, enterprise adapters
+    policies/rego/   OPA Rego policy files
+    database/        SQLite setup and seed data
 frontend/
   src/
-    layouts/
-    components/
-    modules/        Dashboard, agents, governance, enterprise, execution, approvals, audit, settings, simulation
-context/            Architecture source-of-truth documents
-docs/               Implementation notes
+    modules/         Dashboard, agents, governance, enterprise, live execution, approvals, audit, settings, simulation
+context/             Original architecture documents
+docs/                Implementation notes
 ```
 
 ## Backend
@@ -39,7 +57,21 @@ Backend URL: `http://localhost:8000`
 
 API docs: `http://localhost:8000/docs`
 
-The backend seeds SQLite automatically on startup with agents, policies, enterprise APIs, firewall rules, budgets, compliance rules, approvals, governance requests, and audit logs.
+## OPA
+
+SentinelAI sends policy decisions to OPA REST at:
+
+```text
+http://localhost:8181/v1/data/sentinelai/governance/decision
+```
+
+Run OPA with the bundled Rego policy:
+
+```bash
+opa run --server app/policies/rego
+```
+
+If OPA is unavailable, SentinelAI fails closed with a `DENY` decision.
 
 ## Frontend
 
@@ -55,8 +87,6 @@ Set `VITE_API_BASE_URL` if the backend is not running at `http://localhost:8000/
 
 ## Demo Passports
 
-Use these seeded Agent Passports in the live execution page or API requests:
-
 - `AGENT-INV-001` - Invoice Agent
 - `AGENT-REF-002` - Refund Agent
 - `AGENT-MER-003` - Merchant Agent
@@ -67,6 +97,7 @@ Use these seeded Agent Passports in the live execution page or API requests:
 
 - `GET /api/v1/health`
 - `GET /api/v1/dashboard`
+- `GET /api/v1/policies`
 - `POST /api/v1/governance/execute`
 - `POST /api/v1/governance/simulate`
 - `GET /api/v1/governance/samples`
@@ -75,6 +106,4 @@ Use these seeded Agent Passports in the live execution page or API requests:
 - `POST /api/v1/approvals/{approval_id}/approve`
 - `GET /api/v1/audit`
 
-## Verification
-
-Backend syntax and graph execution were verified with the local virtual environment. Frontend production build was verified with Vite.
+The app includes a prototype migration that rebuilds the old v1 `audit_logs` table into the v2 Splunk-compatible schema on startup.
