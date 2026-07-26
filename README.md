@@ -68,7 +68,7 @@ http://localhost:8181/v1/data/sentinelai/governance/decision
 Run OPA with the bundled Rego policy:
 
 ```bash
-opa run --server app/policies/rego
+opa run --server --watch app/policies/rego
 ```
 
 If OPA is unavailable, SentinelAI fails closed with a `DENY` decision.
@@ -98,6 +98,7 @@ Set `VITE_API_BASE_URL` if the backend is not running at `http://localhost:8000/
 - `GET /api/v1/health`
 - `GET /api/v1/dashboard`
 - `GET /api/v1/policies`
+- `POST /api/v1/policies`
 - `POST /api/v1/governance/execute`
 - `POST /api/v1/governance/simulate`
 - `GET /api/v1/governance/samples`

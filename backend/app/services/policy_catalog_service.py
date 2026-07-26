@@ -27,6 +27,27 @@ class PolicyCatalogService:
             )
         return policies
 
+    def create_policy(self, policy_id: str, name: str, content: str) -> dict:
+        self.policy_directory.mkdir(parents=True, exist_ok=True)
+        path = self.policy_directory / f"{policy_id}.rego"
+        if path.exists():
+            raise ValueError(f"Policy '{policy_id}' already exists")
+        if self._extract_package(content) == "unknown":
+            raise ValueError("Rego policy must declare a package")
+        path.write_text(content.strip() + "\n", encoding="utf-8")
+        return {
+            "id": path.stem,
+            "policy_id": path.stem,
+            "name": name,
+            "engine": "OPA",
+            "language": "Rego",
+            "status": "ACTIVE",
+            "path": str(path),
+            "package": self._extract_package(content),
+            "rules": self._extract_rules(content),
+            "content": content.strip() + "\n",
+        }
+
     def count_active(self) -> int:
         return len(self.list_policies())
 

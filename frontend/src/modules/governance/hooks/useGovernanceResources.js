@@ -1,7 +1,8 @@
-import { useQueries } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { governanceService } from "../services/governanceService.js";
 
 export function useGovernanceResources() {
+  const queryClient = useQueryClient();
   const [policies, settings] = useQueries({
     queries: ["policies", "settings"].map((kind) => ({
       queryKey: [kind],
@@ -10,6 +11,10 @@ export function useGovernanceResources() {
   });
   return {
     policies,
-    settings
+    settings,
+    createPolicy: useMutation({
+      mutationFn: governanceService.createPolicy,
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ["policies"] })
+    })
   };
 }

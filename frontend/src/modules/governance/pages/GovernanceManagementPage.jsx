@@ -1,10 +1,13 @@
+import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Button } from "../../../components/button/Button.jsx";
 import { Card, CardBody, CardHeader } from "../../../components/card/Card.jsx";
 import { StatusBadge } from "../../../components/badge/StatusBadge.jsx";
 import { DataTable } from "../../../components/table/DataTable.jsx";
 import { Tabs } from "../../../components/tabs/Tabs.jsx";
 import { PageHeader } from "../../../layouts/PageHeader.jsx";
+import { PolicyFormModal } from "../components/PolicyFormModal.jsx";
 import { useGovernanceResources } from "../hooks/useGovernanceResources.js";
-import { useState } from "react";
 
 const tabs = [
   { id: "policies", label: "OPA Policies" },
@@ -13,8 +16,16 @@ const tabs = [
 ];
 
 export function GovernanceManagementPage() {
-  const { policies, settings } = useGovernanceResources();
+  const { policies, settings, createPolicy } = useGovernanceResources();
   const [active, setActive] = useState("policies");
+  const [policyModalOpen, setPolicyModalOpen] = useState(false);
+
+  function submitPolicy(payload, setError) {
+    createPolicy.mutate(payload, {
+      onSuccess: () => setPolicyModalOpen(false),
+      onError: (error) => setError(formatApiError(error))
+    });
+  }
 
   return (
     <div>
@@ -27,17 +38,26 @@ export function GovernanceManagementPage() {
         <CardBody>
           <Tabs tabs={tabs} active={active} onChange={setActive} />
           <div className="mt-5">
-            {active === "policies" ? <OpaPolicies policies={policies} /> : null}
+            {active === "policies" ? <OpaPolicies policies={policies} onAdd={() => setPolicyModalOpen(true)} /> : null}
             {active === "risk" ? <RiskConfiguration /> : null}
             {active === "audit" ? <AuditConfiguration settings={settings.data} /> : null}
           </div>
         </CardBody>
       </Card>
+      <PolicyFormModal open={policyModalOpen} onClose={() => setPolicyModalOpen(false)} onSubmit={submitPolicy} pending={createPolicy.isPending} />
     </div>
   );
 }
 
-function OpaPolicies({ policies }) {
+function formatApiError(error) {
+  const detail = error.response?.data?.detail;
+  if (Array.isArray(detail)) {
+    return detail.map((item) => item.msg).join(", ");
+  }
+  return detail || "Unable to add policy";
+}
+
+function OpaPolicies({ policies, onAdd }) {
   const columns = [
     { key: "policy_id", header: "Policy ID" },
     { key: "name", header: "Policy" },
@@ -46,7 +66,21 @@ function OpaPolicies({ policies }) {
     { key: "status", header: "Status", render: (row) => <StatusBadge status={row.status} /> },
     { key: "rules", header: "Rules", render: (row) => row.rules?.length || 0 }
   ];
-  return <DataTable columns={columns} rows={policies.data || []} loading={policies.isLoading} empty="No Rego policies found" />;
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-ink">OPA Policy Bundle</h2>
+          <p className="text-sm text-slate-500">Add Rego policies that OPA evaluates during governance execution.</p>
+        </div>
+        <Button onClick={onAdd}>
+          <Plus className="h-4 w-4" />
+          Add Policy
+        </Button>
+      </div>
+      <DataTable columns={columns} rows={policies.data || []} loading={policies.isLoading} empty="No Rego policies found" />
+    </div>
+  );
 }
 
 function RiskConfiguration() {

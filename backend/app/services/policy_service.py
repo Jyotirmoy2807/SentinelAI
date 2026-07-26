@@ -6,6 +6,9 @@ class PolicyService:
     def list_policies(self) -> list[dict]:
         return self.policy_catalog.list_policies()
 
+    def create_policy(self, payload) -> dict:
+        return self.policy_catalog.create_policy(payload.policy_id, payload.name, payload.content)
+
     def evaluate(self, identity: dict, normalized_execution: dict, risk: dict) -> dict:
         result = self.opa_adapter.evaluate(self._build_opa_input(identity, normalized_execution, risk))
         return {
