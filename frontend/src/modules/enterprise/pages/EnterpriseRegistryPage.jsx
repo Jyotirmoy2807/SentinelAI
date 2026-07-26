@@ -25,7 +25,6 @@ export function EnterpriseRegistryPage() {
       { key: "version", header: "Version" },
       { key: "status", header: "Status", render: (row) => <StatusBadge status={row.status} /> },
       { key: "authentication_type", header: "Auth" },
-      { key: "required_policies", header: "Policies", render: (row) => row.required_policies?.join(", ") },
       {
         key: "actions",
         header: "Actions",
@@ -101,7 +100,6 @@ export function EnterpriseRegistryPage() {
                   <div className="text-xs font-semibold uppercase text-slate-400">Endpoint</div>
                   <div className="mt-1 break-words font-medium text-ink">{detail.base_url}{detail.path}</div>
                 </div>
-                <TagBlock title="Required Policies" items={detail.required_policies} />
                 <pre className="json-panel max-h-44 overflow-y-auto overflow-x-hidden rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify({ authentication_config: detail.authentication_config, endpoint_metadata: detail.endpoint_metadata }, null, 2)}</pre>
               </>
             ) : (

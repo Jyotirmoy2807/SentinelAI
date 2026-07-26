@@ -63,6 +63,8 @@ class ApprovalService:
         return self._to_state(approval)
 
     def approve(self, approval: Approval, approver: str, comments: str) -> Approval:
+        if approval.status != "PENDING":
+            raise ValueError(f"Approval has already been decided with status '{approval.status}' and cannot be modified.")
         updated = self.repository.update(
             approval,
             {
@@ -76,6 +78,8 @@ class ApprovalService:
         return updated
 
     def reject(self, approval: Approval, approver: str, comments: str) -> Approval:
+        if approval.status != "PENDING":
+            raise ValueError(f"Approval has already been decided with status '{approval.status}' and cannot be modified.")
         updated = self.repository.update(
             approval,
             {

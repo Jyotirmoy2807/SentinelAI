@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, Depends
 
 from app.core.dependencies import get_services
@@ -13,14 +14,38 @@ router = APIRouter(prefix="/governance", tags=["Governance Execution"])
 async def execute_governance(payload: GovernanceRequest, services: ServiceContainer = Depends(get_services)) -> dict:
     graph = GovernanceGraph(services)
     result = await graph.execute(payload.model_dump(by_alias=True), simulation=False)
-    return result["response"]
+    
+    response = result["response"]
+    if response.get("governance", {}).get("decision") == "REQUIRE_APPROVAL":
+        request_id = response["governance"]["requestId"]
+        while True:
+            await asyncio.sleep(1)
+            services.approvals.repository.db.expire_all()
+            approval = services.approvals.repository.get_by_request_id(request_id)
+            if approval and approval.status in {"APPROVED", "REJECTED"}:
+                resumed_result = await graph.resume(approval.state_snapshot, approval.status, approval.approver, approval.comments)
+                return resumed_result["response"]
+
+    return response
 
 
 @router.post("/simulate", response_model=GovernanceResponse)
 async def simulate_governance(payload: GovernanceRequest, services: ServiceContainer = Depends(get_services)) -> dict:
     graph = GovernanceGraph(services)
     result = await graph.execute(payload.model_dump(by_alias=True), simulation=True)
-    return result["response"]
+
+    response = result["response"]
+    if response.get("governance", {}).get("decision") == "REQUIRE_APPROVAL":
+        request_id = response["governance"]["requestId"]
+        while True:
+            await asyncio.sleep(1)
+            services.approvals.repository.db.expire_all()
+            approval = services.approvals.repository.get_by_request_id(request_id)
+            if approval and approval.status in {"APPROVED", "REJECTED"}:
+                resumed_result = await graph.resume(approval.state_snapshot, approval.status, approval.approver, approval.comments)
+                return resumed_result["response"]
+
+    return response
 
 
 @router.get("/samples", response_model=list[SimulationSample])

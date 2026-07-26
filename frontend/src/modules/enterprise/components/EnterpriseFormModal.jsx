@@ -109,7 +109,6 @@ export function EnterpriseFormModal({ open, onClose, item, onSubmit, lookups = {
         <Select label="Status" value={form.status} options={statusOptions} onChange={(value) => update("status", value)} />
         <NumberField label="Timeout Seconds" value={form.timeout_seconds} min={1} max={120} onChange={(value) => update("timeout_seconds", value)} />
         <NumberField label="Retry Count" value={form.retry_count} min={0} max={5} onChange={(value) => update("retry_count", value)} />
-        <Checklist title="Required Policies" values={form.required_policies} options={policies.map((policy) => policy.policy_id)} labels={Object.fromEntries(policies.map((policy) => [policy.policy_id, policy.name]))} onToggle={togglePolicy} />
         <JsonArea label="Authentication Config" value={form.authentication_config} onChange={(value) => update("authentication_config", value)} />
         <JsonArea label="Endpoint Metadata" value={form.endpoint_metadata} onChange={(value) => update("endpoint_metadata", value)} />
         {error ? <div className="rounded-md bg-red-50 p-3 text-sm text-danger md:col-span-2">{error}</div> : null}
