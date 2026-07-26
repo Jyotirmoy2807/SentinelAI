@@ -13,7 +13,7 @@ class ExecutionLog(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     execution_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     request_id: Mapped[str] = mapped_column(String(80), index=True)
-    adapter: Mapped[str] = mapped_column(String(80), default="")
+    executor: Mapped[str] = mapped_column(String(80), default="")
     enterprise_status: Mapped[str] = mapped_column(String(80), default="")
     response_code: Mapped[str] = mapped_column(String(32), default="")
     latency_ms: Mapped[float] = mapped_column(Float, default=0.0)

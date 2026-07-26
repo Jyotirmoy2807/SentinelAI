@@ -33,7 +33,7 @@ backend/
     repositories/    CRUD-only persistence layer
     models/          SQLAlchemy entities
     schemas/         Pydantic DTOs
-    adapters/        OPA, Splunk-compatible audit sink, enterprise adapters
+    adapters/        OPA, Splunk-compatible audit sink, Universal API Adapter
     policies/rego/   OPA Rego policy files
     database/        SQLite setup and seed data
 frontend/
@@ -110,6 +110,8 @@ Set `VITE_API_BASE_URL` if the backend is not running at `http://localhost:8000/
 - `POST /api/v1/governance/simulate`
 - `GET /api/v1/governance/samples`
 - `WS /api/v1/ws/governance/live`
+- `GET /api/v1/enterprise`
+- `GET /api/v1/enterprise/lookups`
 - `GET /api/v1/approvals`
 - `POST /api/v1/approvals/{approval_id}/approve`
 - `GET /api/v1/audit`

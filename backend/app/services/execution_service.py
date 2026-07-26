@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from app.adapters.factory import EnterpriseAdapterFactory
+from app.adapters.universal_api_adapter import UniversalAPIAdapter
 from app.repositories.enterprise_api_repository import EnterpriseAPIRepository
 from app.repositories.execution_repository import ExecutionRepository
 from app.utils.serialization import json_safe
@@ -11,37 +11,30 @@ class ExecutionService:
         self,
         enterprise_repository: EnterpriseAPIRepository,
         execution_repository: ExecutionRepository,
-        adapter_factory: EnterpriseAdapterFactory,
+        universal_adapter: UniversalAPIAdapter,
     ):
         self.enterprise_repository = enterprise_repository
         self.execution_repository = execution_repository
-        self.adapter_factory = adapter_factory
+        self.universal_adapter = universal_adapter
 
     def execute(self, request_id: str, normalized_execution: dict) -> dict:
-        api = self.enterprise_repository.get_by_service_name(normalized_execution.get("service", ""))
+        api = self.enterprise_repository.get_by_service_operation(
+            normalized_execution.get("service", ""),
+            normalized_execution.get("operation", ""),
+        )
         if api is None or api.status != "ACTIVE":
             return self._record_failure(
                 request_id,
-                "UNREGISTERED",
                 normalized_execution,
-                f"Enterprise API {normalized_execution.get('service')} is not active or registered.",
+                f"Enterprise API {normalized_execution.get('service')} / {normalized_execution.get('operation')} is not active or registered.",
             )
         try:
-            adapter = self.adapter_factory.get_adapter(api.adapter)
-            operation = normalized_execution.get("operation")
-            if operation not in (api.supported_operations or []):
-                return self._record_failure(
-                    request_id,
-                    api.adapter,
-                    normalized_execution,
-                    f"Operation {operation} is not registered for {api.service_name}.",
-                )
-            result = adapter.execute(normalized_execution)
+            result = self.universal_adapter.execute(api, normalized_execution)
             execution = self.execution_repository.create(
                 {
                     "execution_id": f"EXE-{uuid4().hex[:10].upper()}",
                     "request_id": request_id,
-                    "adapter": api.adapter,
+                    "executor": self.universal_adapter.executor_name,
                     "enterprise_status": result.status,
                     "response_code": str(result.http_code),
                     "latency_ms": result.latency_ms,
@@ -52,7 +45,13 @@ class ExecutionService:
             )
             self.execution_repository.db.commit()
             return {
-                "adapter_used": api.adapter,
+                "executor": self.universal_adapter.executor_name,
+                "api_registry_entry": {
+                    "service": api.service_name,
+                    "operation": api.operation,
+                    "method": api.method,
+                    "version": api.version,
+                },
                 "enterprise_request": normalized_execution,
                 "enterprise_response": result.payload,
                 "status_code": result.http_code,
@@ -63,11 +62,11 @@ class ExecutionService:
                 "business_code": result.business_code,
             }
         except Exception as exc:
-            return self._record_failure(request_id, api.adapter, normalized_execution, str(exc))
+            return self._record_failure(request_id, normalized_execution, str(exc))
 
     def simulate(self, request_id: str, normalized_execution: dict) -> dict:
         return {
-            "adapter_used": "SimulationAdapter",
+            "executor": "SimulationOnly",
             "enterprise_request": normalized_execution,
             "enterprise_response": {
                 "simulated": True,
@@ -84,12 +83,12 @@ class ExecutionService:
     def list_by_request(self, request_id: str) -> list:
         return self.execution_repository.list_by_request(request_id)
 
-    def _record_failure(self, request_id: str, adapter: str, normalized_execution: dict, message: str) -> dict:
+    def _record_failure(self, request_id: str, normalized_execution: dict, message: str) -> dict:
         execution = self.execution_repository.create(
             {
                 "execution_id": f"EXE-{uuid4().hex[:10].upper()}",
                 "request_id": request_id,
-                "adapter": adapter,
+                "executor": self.universal_adapter.executor_name,
                 "enterprise_status": "FAILED",
                 "response_code": "500",
                 "latency_ms": 0,
@@ -100,7 +99,7 @@ class ExecutionService:
         )
         self.execution_repository.db.commit()
         return {
-            "adapter_used": adapter,
+            "executor": self.universal_adapter.executor_name,
             "enterprise_request": normalized_execution,
             "enterprise_response": {"error": message},
             "status_code": 500,

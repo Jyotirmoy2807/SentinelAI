@@ -16,10 +16,10 @@ class NormalizationService:
         }
 
     def _normalize_label(self, value: str) -> str:
-        return " ".join(str(value).replace("_", " ").replace("-", " ").split()).title()
+        return str(value or "").strip()
 
     def _normalize_operation(self, value: str) -> str:
-        return "_".join(str(value).replace("-", "_").replace(" ", "_").lower().split("_"))
+        return str(value or "").strip()
 
     def _extract_amount(self, parameters: dict) -> float:
         amount = parameters.get("amount") or parameters.get("total") or 0

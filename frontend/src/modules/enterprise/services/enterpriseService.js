@@ -5,8 +5,8 @@ export const enterpriseService = {
     const { data } = await apiClient.get("/enterprise");
     return data;
   },
-  async adapterCatalog() {
-    const { data } = await apiClient.get("/enterprise/adapters/catalog");
+  async lookups() {
+    const { data } = await apiClient.get("/enterprise/lookups");
     return data;
   },
   async create(payload) {

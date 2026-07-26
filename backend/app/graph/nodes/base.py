@@ -83,15 +83,14 @@ async def run_governance_node(
                 "sections": [],
             },
             "response": {
-                "metadata": state.get("metadata", {}),
                 "governance": {
+                    "requestId": state.get("metadata", {}).get("request_id", ""),
                     "decision": "ERROR",
-                    "reasons": [str(exc)],
-                    "approval_status": state.get("approval", {}).get("status", "NOT_REQUIRED"),
+                    "riskScore": state.get("risk", {}).get("score", 0),
+                    "auditId": "",
+                    "reason": str(exc),
                 },
                 "result": None,
-                "explainability": {},
-                "state": state,
             },
         }
 

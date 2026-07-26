@@ -29,7 +29,7 @@ class ExecutionLogRead(ORMModel):
     id: int
     execution_id: str
     request_id: str
-    adapter: str
+    executor: str
     enterprise_status: str
     response_code: str
     latency_ms: float

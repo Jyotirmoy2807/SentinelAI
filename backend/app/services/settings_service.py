@@ -1,11 +1,9 @@
-from app.adapters.factory import EnterpriseAdapterFactory
 from app.core.config import Settings
 
 
 class SettingsService:
-    def __init__(self, settings: Settings, adapter_factory: EnterpriseAdapterFactory, services=None):
+    def __init__(self, settings: Settings, services=None):
         self.settings = settings
-        self.adapter_factory = adapter_factory
         self.services = services
 
     def read(self) -> dict:
@@ -16,8 +14,7 @@ class SettingsService:
             "graph_version": self.settings.graph_version,
             "database_url": self.settings.database_url,
             "cors_origins": self.settings.cors_origins,
-            "available_adapters": self.adapter_factory.list_adapters(),
-            "adapter_catalog": self.adapter_factory.list_adapter_metadata(),
+            "enterprise_executor": "UniversalAPIAdapter",
             "opa_url": self.settings.opa_url,
             "opa_decision_path": self.settings.opa_decision_path,
             "opa_policy_bundle_path": self.settings.opa_policy_bundle_path,
@@ -32,14 +29,47 @@ class SettingsService:
         agents = self.services.agents.list_agents() if self.services else []
         enterprise = self.services.enterprise_registry.list_apis() if self.services else []
         policy_lookups = self.services.policies.lookups() if self.services else {}
+        enterprise_lookup = self._enterprise_lookup(enterprise)
+        services = sorted({item.service_name for item in enterprise if item.status != "DELETED"})
+        operations = sorted({item.operation for item in enterprise if item.status != "DELETED"})
+        agent_statuses = ["ACTIVE", "SUSPENDED", "BLOCKED", "DELETED"]
+        risk_tiers = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
         return {
             **policy_lookups,
-            "adapters": self.adapter_factory.list_adapter_metadata(),
-            "enterprise_apis": [{"id": item.id, "service_name": item.service_name, "adapter": item.adapter, "supported_operations": item.supported_operations} for item in enterprise],
+            **(self.services.enterprise_registry.lookups() if self.services else {}),
+            "enterprise_apis": enterprise_lookup,
+            "api_operations": [
+                {"id": item.id, "service_name": item.service_name, "operation": item.operation, "status": item.status}
+                for item in enterprise
+            ],
             "governance_policies": [{"id": item.id, "policy_id": item.policy_id, "name": item.name, "enabled": item.enabled} for item in policies],
             "budget_policies": [{"id": item.id, "name": item.name, "department": item.department, "status": item.status} for item in budgets],
             "agent_passports": [{"id": item.id, "passport_id": item.passport_id, "name": item.name, "department": item.department} for item in agents],
             "versions": sorted({item.version for item in agents} | {item.version for item in enterprise}),
-            "agent_statuses": ["ACTIVE", "SUSPENDED", "BLOCKED", "DELETED"],
-            "risk_tiers": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+            "agent_statuses": agent_statuses,
+            "risk_tiers": risk_tiers,
+            "condition_value_options": {
+                "identity.status": self._option_list(agent_statuses),
+                "identity.department": self._option_list(policy_lookups.get("departments", [])),
+                "identity.riskTier": self._option_list(risk_tiers),
+                "normalizedExecution.service": self._option_list(services),
+                "normalizedExecution.operation": self._option_list(operations),
+                "risk.level": self._option_list(risk_tiers),
+                "risk.category": self._option_list(risk_tiers),
+            },
+            "numeric_condition_fields": ["identity.trustScore", "normalizedExecution.amount", "risk.score"],
         }
+
+    def _enterprise_lookup(self, enterprise: list) -> list[dict]:
+        grouped: dict[str, set[str]] = {}
+        for item in enterprise:
+            if item.status == "DELETED":
+                continue
+            grouped.setdefault(item.service_name, set()).add(item.operation)
+        return [
+            {"service_name": service_name, "supported_operations": sorted(operations)}
+            for service_name, operations in sorted(grouped.items())
+        ]
+
+    def _option_list(self, values: list[str]) -> list[dict[str, str]]:
+        return [{"value": value, "label": value} for value in values]

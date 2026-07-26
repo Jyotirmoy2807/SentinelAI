@@ -29,8 +29,34 @@ def _migrate_prototype_schema() -> None:
 
         if "enterprise_apis" in table_names:
             enterprise_columns = {column["name"] for column in inspector.get_columns("enterprise_apis")}
-            if "supported_operations" not in enterprise_columns or "permissions" in enterprise_columns or "allowed_agents" in enterprise_columns:
+            required_columns = {
+                "service_name",
+                "operation",
+                "method",
+                "base_url",
+                "path",
+                "authentication_type",
+                "authentication_config",
+                "timeout_seconds",
+                "retry_count",
+                "version",
+                "status",
+                "required_policies",
+                "endpoint_metadata",
+            }
+            if (
+                required_columns - enterprise_columns
+                or "adapter" in enterprise_columns
+                or "supported_operations" in enterprise_columns
+                or "permissions" in enterprise_columns
+                or "allowed_agents" in enterprise_columns
+            ):
                 connection.execute(text("DROP TABLE enterprise_apis"))
+
+        if "execution_logs" in table_names:
+            execution_columns = {column["name"] for column in inspector.get_columns("execution_logs")}
+            if "executor" not in execution_columns or "adapter" in execution_columns:
+                connection.execute(text("DROP TABLE execution_logs"))
 
         if "governance_requests" in table_names:
             connection.execute(text("DELETE FROM governance_requests WHERE request_id LIKE 'REQ-SEED-%'"))

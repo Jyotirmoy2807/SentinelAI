@@ -12,7 +12,7 @@ import { useGovernanceResources } from "../../governance/hooks/useGovernanceReso
 const EMPTY_LOOKUP_LIST = [];
 
 export function EnterpriseRegistryPage() {
-  const { data = [], isLoading, adapters, createApi, updateApi, activateApi, deactivateApi, deleteApi } = useEnterpriseApis();
+  const { data = [], isLoading, lookups, createApi, updateApi, activateApi, deactivateApi, deleteApi } = useEnterpriseApis();
   const governance = useGovernanceResources();
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -20,16 +20,20 @@ export function EnterpriseRegistryPage() {
   const columns = useMemo(
     () => [
       { key: "service_name", header: "Service" },
-      { key: "adapter", header: "Adapter" },
+      { key: "operation", header: "Operation" },
+      { key: "method", header: "Method" },
       { key: "version", header: "Version" },
       { key: "status", header: "Status", render: (row) => <StatusBadge status={row.status} /> },
-      { key: "supported_operations", header: "Supported Operations", render: (row) => row.supported_operations?.join(", ") },
+      { key: "authentication_type", header: "Auth" },
       { key: "required_policies", header: "Policies", render: (row) => row.required_policies?.join(", ") },
       {
         key: "actions",
         header: "Actions",
+        width: "150px",
+        headerClassName: "text-right pr-6",
+        cellClassName: "pr-6",
         render: (row) => (
-          <div className="flex gap-1" onClick={(event) => event.stopPropagation()}>
+          <div className="flex min-w-[124px] justify-end gap-1" onClick={(event) => event.stopPropagation()}>
             <IconButton label="Edit" icon={Edit} onClick={() => openEdit(row)} />
             <IconButton label="Activate" icon={CheckCircle} onClick={() => activateApi.mutate(row.id)} />
             <IconButton label="Deactivate" icon={PauseCircle} onClick={() => deactivateApi.mutate(row.id)} />
@@ -65,7 +69,7 @@ export function EnterpriseRegistryPage() {
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title="Enterprise API Registry"
-        description="Registered enterprise capabilities, adapter assignments, policy requirements, and service health posture."
+        description="Registered enterprise service operations, endpoint contracts, policy requirements, and service health posture."
         action={
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
@@ -75,7 +79,7 @@ export function EnterpriseRegistryPage() {
       />
       <div className="grid min-h-0 min-w-0 flex-1 gap-5 overflow-y-auto overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] xl:overflow-hidden">
         <Card className="flex min-h-0 flex-col">
-          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-3">
             <DataTable columns={columns} rows={data} loading={isLoading} empty="No enterprise APIs registered" onRowClick={setSelected} />
           </CardBody>
         </Card>
@@ -85,14 +89,20 @@ export function EnterpriseRegistryPage() {
             {detail ? (
               <>
                 <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                  <Info label="Adapter" value={detail.adapter} />
+                  <Info label="Operation" value={detail.operation} />
+                  <Info label="Method" value={detail.method} />
                   <Info label="Version" value={detail.version} />
                   <Info label="Status" value={<StatusBadge status={detail.status} />} />
-                  <Info label="Operations" value={detail.supported_operations?.length || 0} />
+                  <Info label="Auth" value={detail.authentication_type} />
+                  <Info label="Timeout" value={`${detail.timeout_seconds || 0}s`} />
+                  <Info label="Retries" value={detail.retry_count ?? 0} />
                 </div>
-                <TagBlock title="Supported Operations" items={detail.supported_operations} />
+                <div className="rounded-md border border-line bg-slate-50 p-3 text-sm">
+                  <div className="text-xs font-semibold uppercase text-slate-400">Endpoint</div>
+                  <div className="mt-1 break-words font-medium text-ink">{detail.base_url}{detail.path}</div>
+                </div>
                 <TagBlock title="Required Policies" items={detail.required_policies} />
-                <pre className="json-panel max-h-52 overflow-y-auto overflow-x-hidden rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(detail.endpoint_metadata, null, 2)}</pre>
+                <pre className="json-panel max-h-44 overflow-y-auto overflow-x-hidden rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify({ authentication_config: detail.authentication_config, endpoint_metadata: detail.endpoint_metadata }, null, 2)}</pre>
               </>
             ) : (
               <div className="text-sm text-slate-500">No service selected</div>
@@ -105,10 +115,10 @@ export function EnterpriseRegistryPage() {
         onClose={() => setModalOpen(false)}
         item={editing}
         onSubmit={submit}
-        adapters={adapters.data ?? EMPTY_LOOKUP_LIST}
+        lookups={lookups.data ?? {}}
         policies={governance.governancePolicies.data ?? EMPTY_LOOKUP_LIST}
         versions={governance.lookups.data?.versions ?? EMPTY_LOOKUP_LIST}
-        statuses={governance.lookups.data?.statuses ?? EMPTY_LOOKUP_LIST}
+        statuses={lookups.data?.statuses ?? governance.lookups.data?.statuses ?? EMPTY_LOOKUP_LIST}
       />
     </div>
   );

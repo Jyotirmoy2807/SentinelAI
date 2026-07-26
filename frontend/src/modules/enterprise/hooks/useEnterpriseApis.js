@@ -5,15 +5,16 @@ import { GOVERNANCE_LOOKUPS_QUERY_KEY } from "../../governance/hooks/useGovernan
 export function useEnterpriseApis() {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: ["enterprise"], queryFn: enterpriseService.list });
-  const adapters = useQuery({ queryKey: ["enterprise-adapters"], queryFn: enterpriseService.adapterCatalog });
+  const lookups = useQuery({ queryKey: ["enterprise-lookups"], queryFn: enterpriseService.lookups });
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["enterprise"] });
+    queryClient.invalidateQueries({ queryKey: ["enterprise-lookups"] });
     queryClient.invalidateQueries({ queryKey: GOVERNANCE_LOOKUPS_QUERY_KEY });
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   };
   return {
     ...query,
-    adapters,
+    lookups,
     createApi: useMutation({ mutationFn: enterpriseService.create, onSuccess: invalidate }),
     updateApi: useMutation({ mutationFn: ({ id, payload }) => enterpriseService.update(id, payload), onSuccess: invalidate }),
     activateApi: useMutation({ mutationFn: enterpriseService.activate, onSuccess: invalidate }),

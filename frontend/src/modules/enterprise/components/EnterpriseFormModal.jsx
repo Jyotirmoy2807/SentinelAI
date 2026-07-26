@@ -3,27 +3,40 @@ import { Button } from "../../../components/button/Button.jsx";
 import { Modal } from "../../../components/modal/Modal.jsx";
 
 const EMPTY_LOOKUP_LIST = [];
+const DEFAULT_VERSION_OPTIONS = ["1.0"];
+const NEW_SERVICE = "__new_service__";
+const NEW_VERSION = "__new_version__";
 
-export function EnterpriseFormModal({ open, onClose, item, onSubmit, adapters = [], policies = [], versions = [], statuses = [] }) {
-  const defaultAdapter = adapters[0]?.name || "";
-  const defaultOperations = adapters[0]?.supported_operations ?? EMPTY_LOOKUP_LIST;
+export function EnterpriseFormModal({ open, onClose, item, onSubmit, lookups = {}, policies = [], versions = [], statuses = [] }) {
+  const services = lookups.services ?? EMPTY_LOOKUP_LIST;
+  const methods = lookups.methods ?? EMPTY_LOOKUP_LIST;
+  const authTypes = lookups.authentication_types ?? EMPTY_LOOKUP_LIST;
+  const statusOptions = statuses.length ? statuses : lookups.statuses ?? EMPTY_LOOKUP_LIST;
+  const versionOptions = versions.length ? versions : DEFAULT_VERSION_OPTIONS;
+
   const defaults = useMemo(
     () => ({
-      service_name: "",
-      adapter: defaultAdapter,
-      version: versions[0] || "",
-      status: statuses[0] || "",
-      supported_operations: defaultOperations,
+      service_name: services[0] || NEW_SERVICE,
+      new_service_name: "",
+      operation: "",
+      method: methods.includes("POST") ? "POST" : methods[0] || "POST",
+      base_url: "mock://enterprise",
+      path: "/",
+      authentication_type: authTypes.includes("NONE") ? "NONE" : authTypes[0] || "NONE",
+      authentication_config: "{}",
+      timeout_seconds: 30,
+      retry_count: 0,
+      version: versionOptions[0] || "1.0",
+      new_version: "",
+      status: statusOptions[0] || "ACTIVE",
       required_policies: [],
       endpoint_metadata: "{\"owner\":\"Platform\",\"sla\":\"250ms mock\"}"
     }),
-    [defaultAdapter, defaultOperations, statuses, versions]
+    [authTypes, methods, services, statusOptions, versionOptions]
   );
+
   const [form, setForm] = useState(defaults);
   const [error, setError] = useState("");
-
-  const selectedAdapter = adapters.find((adapter) => adapter.name === form.adapter);
-  const operationOptions = selectedAdapter?.supported_operations ?? EMPTY_LOOKUP_LIST;
 
   useEffect(() => {
     if (!open) return;
@@ -31,9 +44,11 @@ export function EnterpriseFormModal({ open, onClose, item, onSubmit, adapters = 
       item
         ? {
             ...item,
-            supported_operations: item.supported_operations || [],
+            new_service_name: "",
+            authentication_config: JSON.stringify(item.authentication_config || {}, null, 2),
             required_policies: item.required_policies || [],
-            endpoint_metadata: JSON.stringify(item.endpoint_metadata || {}, null, 2)
+            endpoint_metadata: JSON.stringify(item.endpoint_metadata || {}, null, 2),
+            new_version: ""
           }
         : defaults
     );
@@ -44,24 +59,34 @@ export function EnterpriseFormModal({ open, onClose, item, onSubmit, adapters = 
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  function updateAdapter(value) {
-    const adapter = adapters.find((item) => item.name === value);
-    setForm((current) => ({ ...current, adapter: value, supported_operations: adapter?.supported_operations ?? EMPTY_LOOKUP_LIST }));
-  }
-
-  function toggleList(field, value) {
+  function togglePolicy(value) {
     setForm((current) => {
-      const currentValues = current[field] || [];
-      const nextValues = currentValues.includes(value) ? currentValues.filter((item) => item !== value) : [...currentValues, value];
-      return { ...current, [field]: nextValues };
+      const currentValues = current.required_policies || [];
+      const required_policies = currentValues.includes(value) ? currentValues.filter((item) => item !== value) : [...currentValues, value];
+      return { ...current, required_policies };
     });
   }
 
   function submit(event) {
     event.preventDefault();
     try {
+      const serviceName = form.service_name === NEW_SERVICE ? form.new_service_name.trim() : form.service_name;
+      const version = form.version === NEW_VERSION ? form.new_version.trim() : form.version;
+      if (!serviceName) throw new Error("Service name is required.");
+      if (!version) throw new Error("Version is required.");
       onSubmit({
-        ...form,
+        service_name: serviceName,
+        operation: form.operation.trim(),
+        method: form.method,
+        base_url: form.base_url.trim(),
+        path: form.path.trim(),
+        authentication_type: form.authentication_type,
+        authentication_config: JSON.parse(form.authentication_config || "{}"),
+        timeout_seconds: Number(form.timeout_seconds || 30),
+        retry_count: Number(form.retry_count || 0),
+        version,
+        status: form.status,
+        required_policies: form.required_policies || [],
         endpoint_metadata: JSON.parse(form.endpoint_metadata || "{}")
       });
     } catch (err) {
@@ -72,16 +97,21 @@ export function EnterpriseFormModal({ open, onClose, item, onSubmit, adapters = 
   return (
     <Modal title={item ? "Edit Enterprise API" : "Register Enterprise API"} open={open} onClose={onClose}>
       <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
-        <Field label="Service Name" value={form.service_name} onChange={(value) => update("service_name", value)} />
-        <Select label="Adapter" value={form.adapter} options={adapters.map((adapter) => adapter.name)} onChange={updateAdapter} />
-        <Select label="Version" value={form.version} options={versions} onChange={(value) => update("version", value)} />
-        <Select label="Status" value={form.status} options={statuses} onChange={(value) => update("status", value)} />
-        <Checklist title="Supported Operations" values={form.supported_operations} options={operationOptions} onToggle={(value) => toggleList("supported_operations", value)} />
-        <Checklist title="Required Policies" values={form.required_policies} options={policies.map((policy) => policy.policy_id)} labels={Object.fromEntries(policies.map((policy) => [policy.policy_id, policy.name]))} onToggle={(value) => toggleList("required_policies", value)} />
-        <label className="text-sm font-medium text-slate-600 md:col-span-2">
-          Endpoint Metadata
-          <textarea rows={4} className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2 font-mono text-xs outline-none focus:border-brand" value={form.endpoint_metadata} onChange={(event) => update("endpoint_metadata", event.target.value)} />
-        </label>
+        <ServiceSelect value={form.service_name} services={services} onChange={(value) => update("service_name", value)} />
+        {form.service_name === NEW_SERVICE ? <Field label="New Service Name" value={form.new_service_name} onChange={(value) => update("new_service_name", value)} /> : null}
+        <Field label="Operation" value={form.operation} onChange={(value) => update("operation", value)} />
+        <Select label="HTTP Method" value={form.method} options={methods} onChange={(value) => update("method", value)} />
+        <Field label="Base URL" value={form.base_url} onChange={(value) => update("base_url", value)} />
+        <Field label="Path" value={form.path} onChange={(value) => update("path", value)} />
+        <Select label="Authentication Type" value={form.authentication_type} options={authTypes} onChange={(value) => update("authentication_type", value)} />
+        <Select label="Version" value={form.version} options={versionOptions} extraOption={{ value: NEW_VERSION, label: "Add New Version" }} onChange={(value) => update("version", value)} />
+        {form.version === NEW_VERSION ? <Field label="New Version" value={form.new_version} onChange={(value) => update("new_version", value)} /> : null}
+        <Select label="Status" value={form.status} options={statusOptions} onChange={(value) => update("status", value)} />
+        <NumberField label="Timeout Seconds" value={form.timeout_seconds} min={1} max={120} onChange={(value) => update("timeout_seconds", value)} />
+        <NumberField label="Retry Count" value={form.retry_count} min={0} max={5} onChange={(value) => update("retry_count", value)} />
+        <Checklist title="Required Policies" values={form.required_policies} options={policies.map((policy) => policy.policy_id)} labels={Object.fromEntries(policies.map((policy) => [policy.policy_id, policy.name]))} onToggle={togglePolicy} />
+        <JsonArea label="Authentication Config" value={form.authentication_config} onChange={(value) => update("authentication_config", value)} />
+        <JsonArea label="Endpoint Metadata" value={form.endpoint_metadata} onChange={(value) => update("endpoint_metadata", value)} />
         {error ? <div className="rounded-md bg-red-50 p-3 text-sm text-danger md:col-span-2">{error}</div> : null}
         <div className="flex justify-end gap-2 md:col-span-2">
           <Button type="button" tone="secondary" onClick={onClose}>
@@ -103,9 +133,35 @@ function Field({ label, value, onChange }) {
   );
 }
 
-function Select({ label, value, options, onChange }) {
-  const normalizedOptions = value && !options.includes(value) ? [value, ...options] : options;
-  const hasOptions = normalizedOptions.length > 0;
+function NumberField({ label, value, min, max, onChange }) {
+  return (
+    <label className="min-w-0 text-sm font-medium text-slate-600">
+      {label}
+      <input type="number" min={min} max={max} className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2 outline-none focus:border-brand" value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  );
+}
+
+function ServiceSelect({ value, services, onChange }) {
+  const options = value && value !== NEW_SERVICE && !services.includes(value) ? [value, ...services] : services;
+  return (
+    <label className="min-w-0 text-sm font-medium text-slate-600">
+      Service
+      <select className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2 outline-none focus:border-brand" value={value || ""} onChange={(event) => onChange(event.target.value)}>
+        {options.map((service) => (
+          <option key={service} value={service}>
+            {service}
+          </option>
+        ))}
+        <option value={NEW_SERVICE}>Add New Service</option>
+      </select>
+    </label>
+  );
+}
+
+function Select({ label, value, options, extraOption, onChange }) {
+  const normalizedOptions = value && !options.includes(value) && value !== extraOption?.value ? [value, ...options] : options;
+  const hasOptions = normalizedOptions.length > 0 || extraOption;
 
   return (
     <label className="min-w-0 text-sm font-medium text-slate-600">
@@ -115,7 +171,17 @@ function Select({ label, value, options, onChange }) {
         {normalizedOptions.map((option) => (
           <option key={option} value={option}>{option}</option>
         ))}
+        {extraOption ? <option value={extraOption.value}>{extraOption.label}</option> : null}
       </select>
+    </label>
+  );
+}
+
+function JsonArea({ label, value, onChange }) {
+  return (
+    <label className="text-sm font-medium text-slate-600 md:col-span-2">
+      {label}
+      <textarea rows={4} className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2 font-mono text-xs outline-none focus:border-brand" value={value || ""} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }

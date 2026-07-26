@@ -33,11 +33,8 @@ class NodeEvent(BaseModel):
 
 
 class GovernanceResponse(BaseModel):
-    metadata: dict[str, Any]
     governance: dict[str, Any]
     result: dict[str, Any] | None = None
-    explainability: dict[str, Any] = Field(default_factory=dict)
-    state: dict[str, Any] = Field(default_factory=dict)
 
 
 class SimulationSample(BaseModel):

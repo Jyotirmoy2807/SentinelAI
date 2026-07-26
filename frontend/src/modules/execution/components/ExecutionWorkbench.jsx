@@ -75,7 +75,7 @@ export function ExecutionWorkbench({ simulation = false }) {
           <NodeDetails node={selectedNode} status={selectedNodeStatus} events={selectedNodeEvents} />
         </div>
 
-        <DecisionSummary response={execution.finalResponse} eventCount={execution.events.length} />
+        <DecisionSummary response={execution.finalResponse} rawState={execution.rawState} eventCount={execution.events.length} />
         <ExecutionMonitor events={execution.events} />
         <TraceExplorer response={execution.finalResponse} rawState={execution.rawState} sampleRequest={selectedSample?.request} />
       </div>
@@ -128,15 +128,15 @@ function ExecutionMonitor({ events }) {
   );
 }
 
-function DecisionSummary({ response, eventCount }) {
-  const risk = response?.governance?.risk || {};
-  const opa = response?.governance?.opa || {};
-  const timeline = response?.explainability?.timeline || [];
+function DecisionSummary({ response, rawState, eventCount }) {
+  const risk = rawState?.risk || { score: response?.governance?.riskScore };
+  const opa = rawState?.policy || { decision: response?.governance?.decision };
+  const timeline = rawState?.audit?.events || rawState?.events || [];
   const items = [
     { label: "Risk", value: risk.level || risk.category || "Pending", detail: risk.score !== undefined ? `Score ${risk.score}` : "NIST RMF pending" },
     { label: "OPA", value: opa.decision || "Pending", detail: opa.matched_policy || "No policy result" },
     { label: "Audit", value: timeline.length || eventCount, detail: "Structured events" },
-    { label: "Latency", value: totalDuration(response), detail: "Workflow runtime" }
+    { label: "Latency", value: totalDuration(rawState), detail: "Workflow runtime" }
   ];
 
   return (
@@ -179,21 +179,22 @@ function NodeDetails({ node, status, events }) {
 
 function TraceExplorer({ response, rawState, sampleRequest }) {
   const [active, setActive] = useState("state");
-  const workflowState = response?.state || rawState || sampleRequest || {};
+  const workflowState = rawState || sampleRequest || {};
   const panels = [
     { id: "state", label: "State", payload: workflowState },
     { id: "policy", label: "Policy", payload: workflowState.policy || {} },
     { id: "api", label: "API", payload: workflowState.execution || {} },
     { id: "approval", label: "Approvals", payload: workflowState.approval || { status: "NOT_REQUIRED" } },
     { id: "audit", label: "Audit", payload: workflowState.audit?.events || [] },
-    { id: "explainability", label: "Explainability", payload: response?.explainability?.timeline || [] }
+    { id: "agent_response", label: "Agent Response", payload: response || {} },
+    { id: "explainability", label: "Explainability", payload: workflowState.explainability?.timeline || [] }
   ];
   const selected = panels.find((panel) => panel.id === active) || panels[0];
 
   return (
     <Card>
       <CardHeader title="Execution Artifacts">
-        {response?.explainability?.narrative || "Artifacts populate as the workflow runs."}
+        {workflowState.explainability?.narrative || "Artifacts populate as the workflow runs."}
       </CardHeader>
       <CardBody>
         <Tabs tabs={panels.map(({ id, label }) => ({ id, label }))} active={selected.id} onChange={setActive} />
@@ -220,8 +221,8 @@ function formatDuration(value) {
   return `${Number.isInteger(duration) ? duration : duration.toFixed(2)} ms`;
 }
 
-function totalDuration(response) {
-  const events = response?.state?.audit?.events || [];
+function totalDuration(rawState) {
+  const events = rawState?.audit?.events || rawState?.events || [];
   const total = events.reduce((sum, event) => sum + Number(event.latency || event.duration_ms || 0), 0);
   return total ? formatDuration(total) : "Pending";
 }

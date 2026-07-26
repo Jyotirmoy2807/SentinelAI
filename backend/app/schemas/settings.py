@@ -8,10 +8,10 @@ class SettingsRead(BaseModel):
     graph_version: str
     database_url: str
     cors_origins: list[str]
-    available_adapters: list[str]
-    adapter_catalog: list[dict]
+    enterprise_executor: str
     opa_url: str
     opa_decision_path: str
     opa_policy_bundle_path: str
+    opa_cli_path: str
     audit_sink: str
     log_level: str

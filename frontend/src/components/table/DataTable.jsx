@@ -72,10 +72,15 @@ export function DataTable({ columns, rows, loading, empty = "No records", onRowC
       </div>
       <div className="hidden overflow-x-hidden rounded-lg border border-line bg-white md:block">
         <table className="w-full table-fixed divide-y divide-line text-sm">
+          <colgroup>
+            {columns.map((column) => (
+              <col key={column.key} style={column.width ? { width: column.width } : undefined} />
+            ))}
+          </colgroup>
           <thead className="bg-slate-50">
             <tr>
               {columns.map((column) => (
-                <th key={column.key} className="break-words px-3 py-3 text-left font-semibold text-slate-600">
+                <th key={column.key} className={`break-words px-3 py-3 text-left font-semibold text-slate-600 ${column.headerClassName || ""}`}>
                   <button className="inline-flex max-w-full items-center gap-1 text-left" onClick={() => toggleSort(column.key)}>
                     {column.header}
                     {sortKey === column.key ? direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" /> : null}
@@ -99,7 +104,7 @@ export function DataTable({ columns, rows, loading, empty = "No records", onRowC
                   className={onRowClick ? "cursor-pointer hover:bg-slate-50" : ""}
                 >
                   {columns.map((column) => (
-                    <td key={column.key} className="break-words px-3 py-3 align-top text-slate-700">
+                    <td key={column.key} className={`break-words px-3 py-3 align-top text-slate-700 ${column.cellClassName || ""}`}>
                       {column.render ? column.render(row) : row[column.key]}
                     </td>
                   ))}

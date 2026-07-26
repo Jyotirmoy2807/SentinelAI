@@ -4,11 +4,14 @@ import { Button } from "../../../components/button/Button.jsx";
 import { Modal } from "../../../components/modal/Modal.jsx";
 
 const EMPTY_LOOKUP_LIST = [];
+const DEFAULT_NUMERIC_FIELDS = ["identity.trustScore", "normalizedExecution.amount", "risk.score"];
 
 export function GovernancePolicyFormModal({ open, onClose, policy, lookups, onSubmit, pending }) {
   const decisions = lookups?.decisions ?? EMPTY_LOOKUP_LIST;
   const fields = lookups?.condition_fields ?? EMPTY_LOOKUP_LIST;
   const operators = lookups?.condition_operators ?? EMPTY_LOOKUP_LIST;
+  const valueOptions = useMemo(() => buildConditionValueOptions(lookups), [lookups]);
+  const numericFields = lookups?.numeric_condition_fields?.length ? lookups.numeric_condition_fields : DEFAULT_NUMERIC_FIELDS;
   const defaults = useMemo(
     () => ({
       policy_id: "",
@@ -38,7 +41,12 @@ export function GovernancePolicyFormModal({ open, onClose, policy, lookups, onSu
   function updateCondition(index, field, value) {
     setForm((current) => ({
       ...current,
-      conditions: current.conditions.map((condition, currentIndex) => (currentIndex === index ? { ...condition, [field]: value } : condition))
+      conditions: current.conditions.map((condition, currentIndex) => {
+        if (currentIndex !== index) return condition;
+        const next = { ...condition, [field]: value };
+        if (field === "field") next.value = "";
+        return next;
+      })
     }));
   }
 
@@ -111,8 +119,17 @@ export function GovernancePolicyFormModal({ open, onClose, policy, lookups, onSu
               form.conditions.map((condition, index) => (
                 <div key={`${condition.field}-${index}`} className="grid min-w-0 gap-2 rounded-md bg-slate-50 p-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
                   <Select value={condition.field} options={fields} onChange={(value) => updateCondition(index, "field", value)} />
-                  <Select value={condition.operator} options={operators} onChange={(value) => updateCondition(index, "operator", value)} />
-                  <input className="min-w-0 rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-brand" value={condition.value} onChange={(event) => updateCondition(index, "value", event.target.value)} />
+                  <Select
+                    value={condition.operator}
+                    options={operatorsForCondition(condition, operators, numericFields, valueOptions)}
+                    onChange={(value) => updateCondition(index, "operator", value)}
+                  />
+                  <ConditionValueControl
+                    condition={condition}
+                    options={valueOptions[condition.field] || EMPTY_LOOKUP_LIST}
+                    numeric={numericFields.includes(condition.field)}
+                    onChange={(value) => updateCondition(index, "value", value)}
+                  />
                   <button type="button" title="Remove condition" className="rounded-md p-2 text-danger hover:bg-red-50" onClick={() => removeCondition(index)}>
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -167,6 +184,30 @@ function Select({ label, value, options, onChange }) {
   );
 }
 
+function ConditionValueControl({ condition, options, numeric, onChange }) {
+  if (numeric) {
+    return (
+      <input
+        type="number"
+        className="min-w-0 rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-brand"
+        value={condition.value ?? ""}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    );
+  }
+  if (options.length) {
+    const normalizedOptions = condition.value && !options.some((option) => option.value === condition.value) ? [{ value: condition.value, label: condition.value }, ...options] : options;
+    return <Select value={condition.value} options={normalizedOptions} onChange={onChange} />;
+  }
+  return (
+    <input
+      className="min-w-0 rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-brand"
+      value={condition.value ?? ""}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  );
+}
+
 function coerceValue(value) {
   if (value === "true") return true;
   if (value === "false") return false;
@@ -177,4 +218,37 @@ function coerceValue(value) {
 function formatError(error) {
   if (Array.isArray(error)) return error.map((item) => item.msg || item).join(", ");
   return String(error);
+}
+
+function buildConditionValueOptions(lookups) {
+  const provided = lookups?.condition_value_options || {};
+  const apiOperations = lookups?.api_operations?.map((item) => item.operation) || [];
+  const groupedOperations = lookups?.enterprise_apis?.flatMap((api) => api.supported_operations || []) || [];
+  return {
+    "identity.status": toOptions(provided["identity.status"], lookups?.agent_statuses),
+    "identity.department": toOptions(provided["identity.department"], lookups?.departments),
+    "identity.riskTier": toOptions(provided["identity.riskTier"], lookups?.risk_tiers),
+    "normalizedExecution.service": toOptions(provided["normalizedExecution.service"], lookups?.services),
+    "normalizedExecution.operation": toOptions(provided["normalizedExecution.operation"], [...apiOperations, ...groupedOperations]),
+    "risk.level": toOptions(provided["risk.level"], lookups?.risk_tiers),
+    "risk.category": toOptions(provided["risk.category"], lookups?.risk_tiers),
+  };
+}
+
+function operatorsForCondition(condition, operators, numericFields, valueOptions) {
+  const field = condition.field;
+  if (numericFields.includes(field)) return operators.filter((operator) => ["equals", "not_equals", "greater_than", "greater_or_equal", "less_than", "less_or_equal"].includes(operator.value));
+  if (valueOptions[field]?.length) return operators.filter((operator) => ["equals", "not_equals"].includes(operator.value));
+  return operators.filter((operator) => ["equals", "not_equals", "contains"].includes(operator.value));
+}
+
+function toOptions(primary, fallback = []) {
+  const values = primary?.length ? primary : fallback || [];
+  const normalized = values.map((item) => (typeof item === "string" ? { value: item, label: item } : item));
+  const seen = new Set();
+  return normalized.filter((item) => {
+    if (!item?.value || seen.has(item.value)) return false;
+    seen.add(item.value);
+    return true;
+  });
 }

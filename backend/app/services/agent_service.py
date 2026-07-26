@@ -95,13 +95,15 @@ class AgentService:
             raise ValueError(f"Unknown budget profile: {data.get('budget_profile')}")
         if self.enterprise_repository:
             enterprise_apis = self.enterprise_repository.list_active()
-            api_by_name = {api.service_name: api for api in enterprise_apis}
-            unknown_apis = sorted(set(data.get("allowed_apis", [])) - set(api_by_name))
+            operations_by_service: dict[str, set[str]] = {}
+            for api in enterprise_apis:
+                operations_by_service.setdefault(api.service_name, set()).add(api.operation)
+            unknown_apis = sorted(set(data.get("allowed_apis", [])) - set(operations_by_service))
             if unknown_apis:
                 raise ValueError(f"Unknown enterprise APIs: {', '.join(unknown_apis)}")
             valid_operations = set()
             for api_name in data.get("allowed_apis", []):
-                valid_operations.update(api_by_name[api_name].supported_operations or [])
+                valid_operations.update(operations_by_service.get(api_name, set()))
             unknown_operations = sorted(set(data.get("allowed_operations", [])) - valid_operations)
             if unknown_operations:
                 raise ValueError(f"Unsupported operations for selected APIs: {', '.join(unknown_operations)}")

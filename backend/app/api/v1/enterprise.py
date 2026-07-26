@@ -21,9 +21,9 @@ def create_api(payload: EnterpriseAPICreate, services: ServiceContainer = Depend
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.get("/adapters/catalog")
-def adapter_catalog(services: ServiceContainer = Depends(get_services)):
-    return services.enterprise_registry.adapter_metadata()
+@router.get("/lookups")
+def lookups(services: ServiceContainer = Depends(get_services)):
+    return services.enterprise_registry.lookups()
 
 
 @router.get("/{api_id}", response_model=EnterpriseAPIRead)

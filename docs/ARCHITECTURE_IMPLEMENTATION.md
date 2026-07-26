@@ -12,7 +12,11 @@ This refactor removes the old standalone AI Firewall, Budget Engine, and Complia
 - Policy decisions are delegated to OPA through `OpaPolicyAdapter`.
 - Splunk-compatible audit events are emitted through an abstract audit sink.
 - Explainability reads audit events and does not maintain a separate execution history.
-- Enterprise adapters are invoked only by `ExecutionService`, after governance allow or approval.
+- `ExecutionService` invokes the configuration-driven `UniversalAPIAdapter` only after governance allow or approval.
+
+## Universal API Adapter
+
+The Enterprise API Registry stores one endpoint configuration per `(service, operation)`, including method, base URL, path, authentication type/config, timeout, retry count, version, status, required policies, and endpoint metadata. The Universal API Adapter resolves that registry entry, injects configured authentication, sends the original `execution.parameters` payload, and captures the upstream response. Governance-denied requests route directly to audit and response and never invoke enterprise execution.
 
 ## Governance Graph
 

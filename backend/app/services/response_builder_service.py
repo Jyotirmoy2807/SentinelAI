@@ -1,27 +1,21 @@
 class ResponseBuilderService:
     def build(self, state: dict) -> dict:
         audit = state.get("audit", {})
-        approval = state.get("approval", {})
         risk = state.get("risk", {})
         decision = audit.get("decision", "ERROR")
-        return {
-            "metadata": {
-                **state.get("metadata", {}),
-                "request_id": state.get("metadata", {}).get("request_id"),
-                "trace_id": state.get("metadata", {}).get("trace_id"),
-            },
+        response = {
             "governance": {
+                "requestId": state.get("metadata", {}).get("request_id", ""),
                 "decision": decision,
-                "risk": risk,
-                "opa": state.get("policy", {}),
-                "reasons": self._collect_reasons(state),
-                "approval_status": approval.get("status", "NOT_REQUIRED"),
-                "status": audit.get("status"),
+                "riskScore": risk.get("score", 0),
+                "auditId": audit.get("audit_id", ""),
             },
-            "result": state.get("execution"),
-            "explainability": state.get("explainability", {}),
-            "state": self._public_state(state),
+            "result": self._result(state, decision),
         }
+        reasons = self._collect_reasons(state)
+        if decision != "ALLOW" and reasons:
+            response["governance"]["reason"] = reasons[0]
+        return response
 
     def _collect_reasons(self, state: dict) -> list[str]:
         reasons = []
@@ -34,23 +28,8 @@ class ResponseBuilderService:
                 reasons.append(payload["block_reason"])
         return [reason for reason in reasons if reason]
 
-    def _public_state(self, state: dict) -> dict:
-        return {
-            key: value
-            for key, value in state.items()
-            if key
-            in {
-                "request",
-                "metadata",
-                "identity",
-                "normalized_execution",
-                "policy",
-                "risk",
-                "approval",
-                "audit",
-                "execution",
-                "explainability",
-                "events",
-                "simulation",
-            }
-        }
+    def _result(self, state: dict, decision: str) -> dict | None:
+        if decision != "ALLOW":
+            return None
+        execution = state.get("execution") or {}
+        return execution.get("enterprise_response") or execution

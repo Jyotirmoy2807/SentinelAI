@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 
 from app.adapters.audit_sink import SQLiteSplunkAuditSink
-from app.adapters.factory import EnterpriseAdapterFactory
 from app.adapters.opa_adapter import OpaPolicyAdapter
+from app.adapters.universal_api_adapter import UniversalAPIAdapter
 from app.core.config import Settings, get_settings
 from app.repositories.agent_repository import AgentRepository
 from app.repositories.approval_repository import ApprovalRepository
@@ -35,7 +35,7 @@ from app.services.settings_service import SettingsService
 @dataclass
 class ServiceContainer:
     settings: Settings
-    adapter_factory: EnterpriseAdapterFactory
+    universal_api_adapter: UniversalAPIAdapter
     ingestion: IngestionService
     normalization: NormalizationService
     agents: AgentService
@@ -53,7 +53,7 @@ class ServiceContainer:
 
 def build_service_container(db: Session) -> ServiceContainer:
     settings = get_settings()
-    adapter_factory = EnterpriseAdapterFactory()
+    universal_api_adapter = UniversalAPIAdapter()
     agent_repository = AgentRepository(db)
     enterprise_repository = EnterpriseAPIRepository(db)
     approval_repository = ApprovalRepository(db)
@@ -77,7 +77,7 @@ def build_service_container(db: Session) -> ServiceContainer:
 
     container = ServiceContainer(
         settings=settings,
-        adapter_factory=adapter_factory,
+        universal_api_adapter=universal_api_adapter,
         ingestion=IngestionService(settings),
         normalization=NormalizationService(),
         agents=AgentService(agent_repository, enterprise_repository, budget_policy_repository, governance_policy_repository),
@@ -90,7 +90,7 @@ def build_service_container(db: Session) -> ServiceContainer:
         ),
         risk=RiskService(),
         approvals=ApprovalService(approval_repository),
-        execution=ExecutionService(enterprise_repository, execution_repository, adapter_factory),
+        execution=ExecutionService(enterprise_repository, execution_repository, universal_api_adapter),
         audit=AuditService(audit_repository, request_repository, audit_sink),
         explainability=ExplainabilityService(),
         response_builder=ResponseBuilderService(),
@@ -103,8 +103,8 @@ def build_service_container(db: Session) -> ServiceContainer:
             request_repository,
             audit_repository,
         ),
-        enterprise_registry=EnterpriseAPIRegistryService(enterprise_repository, adapter_factory, governance_policy_repository),
-        settings_service=SettingsService(settings, adapter_factory, None),
+        enterprise_registry=EnterpriseAPIRegistryService(enterprise_repository, governance_policy_repository),
+        settings_service=SettingsService(settings),
     )
     container.settings_service.services = container
     return container

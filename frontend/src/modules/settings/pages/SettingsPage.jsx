@@ -12,7 +12,7 @@ export function SettingsPage() {
     <div>
       <PageHeader
         title="Settings"
-        description="Runtime configuration, environment state, adapter registry, and backend health for the prototype deployment."
+        description="Runtime configuration, environment state, API registry execution, and backend health for the prototype deployment."
       />
       <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.2fr)]">
         <Card>
