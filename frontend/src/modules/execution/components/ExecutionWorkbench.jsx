@@ -16,17 +16,22 @@ export function ExecutionWorkbench({ simulation = false }) {
   const { data: samples = [] } = useExecutionSamples();
   const selectedNodeId = useUiStore((state) => state.selectedNodeId);
   const selectNode = useUiStore((state) => state.selectNode);
-  const [sampleId, setSampleId] = useState("");
+  const stateData = useUiStore((state) => (simulation ? state.simulationState : state.liveState));
+  const setExecutionState = useUiStore((state) => state.setExecutionState);
+  const sampleId = stateData?.sampleId || "";
+
   const selectedSample = samples.find((sample) => sample.id === sampleId) || samples[0];
-  const execution = useLiveExecution();
+  const execution = useLiveExecution(simulation);
   const selectedNode = useMemo(() => governanceNodes.find((node) => node.id === selectedNodeId) || governanceNodes[0], [selectedNodeId]);
   const selectedNodeEvents = useMemo(() => execution.events.filter((event) => event.node === selectedNode?.id), [execution.events, selectedNode?.id]);
   const selectedNodeStatus = execution.nodeStatuses[selectedNode?.id] || "PENDING";
   const runStatus = execution.finalResponse?.governance?.decision || (execution.connected ? "RUNNING" : "PENDING");
 
   useEffect(() => {
-    if (samples[0] && !sampleId) setSampleId(samples[0].id);
-  }, [samples, sampleId]);
+    if (samples[0] && !sampleId) {
+      setExecutionState(simulation, { sampleId: samples[0].id });
+    }
+  }, [samples, sampleId, setExecutionState, simulation]);
 
   function start() {
     if (selectedSample) {
@@ -42,7 +47,7 @@ export function ExecutionWorkbench({ simulation = false }) {
         description={simulation ? "Replay governed requests with enterprise execution disabled." : "Monitor governed requests across risk, OPA, approval, audit, and response stages."}
         action={
           <div className="flex min-w-0 flex-wrap gap-2">
-            <select className="h-10 min-w-0 max-w-full rounded-md border border-line bg-white px-3 text-sm outline-none focus:border-brand" value={sampleId} onChange={(event) => setSampleId(event.target.value)}>
+            <select className="h-10 min-w-0 max-w-full rounded-md border border-line bg-white px-3 text-sm outline-none focus:border-brand" value={sampleId} onChange={(event) => setExecutionState(simulation, { sampleId: event.target.value })}>
               {samples.map((sample) => (
                 <option key={sample.id} value={sample.id}>
                   {sample.name}
@@ -53,7 +58,7 @@ export function ExecutionWorkbench({ simulation = false }) {
               <Play className="h-4 w-4" />
               {execution.connected ? "Running" : simulation ? "Replay" : "Execute"}
             </Button>
-            <Button tone="secondary" onClick={() => window.location.reload()}>
+            <Button tone="secondary" onClick={() => execution.reset()}>
               <RotateCcw className="h-4 w-4" />
               Reset
             </Button>

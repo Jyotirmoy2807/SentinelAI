@@ -1,18 +1,30 @@
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export function DataTable({ columns, rows, loading, empty = "No records", onRowClick }) {
+export function DataTable({ columns, rows, loading, empty = "No records", onRowClick, initialSortKey, initialDirection }) {
   const [query, setQuery] = useState("");
-  const [sortKey, setSortKey] = useState(columns[0]?.key);
-  const [direction, setDirection] = useState("asc");
+  const [sortKey, setSortKey] = useState(initialSortKey !== undefined ? initialSortKey : columns[0]?.key);
+  const [direction, setDirection] = useState(initialDirection || "asc");
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
   const visibleRows = useMemo(() => {
     const filtered = rows.filter((row) => JSON.stringify(row).toLowerCase().includes(query.toLowerCase()));
+    if (!sortKey) return filtered;
     const sorted = [...filtered].sort((a, b) => {
-      const first = String(a[sortKey] ?? "");
-      const second = String(b[sortKey] ?? "");
+      const valA = a[sortKey];
+      const valB = b[sortKey];
+      
+      // Compare dates if valid date inputs or strings
+      const timeA = typeof valA === "string" && !isNaN(Date.parse(valA)) ? new Date(valA).getTime() : null;
+      const timeB = typeof valB === "string" && !isNaN(Date.parse(valB)) ? new Date(valB).getTime() : null;
+
+      if (timeA !== null && timeB !== null) {
+        return direction === "asc" ? timeA - timeB : timeB - timeA;
+      }
+
+      const first = String(valA ?? "");
+      const second = String(valB ?? "");
       return direction === "asc" ? first.localeCompare(second) : second.localeCompare(first);
     });
     return sorted;

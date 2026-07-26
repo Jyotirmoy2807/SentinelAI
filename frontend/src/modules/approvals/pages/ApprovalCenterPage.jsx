@@ -49,6 +49,8 @@ export function ApprovalCenterPage() {
               rows={data}
               loading={isLoading}
               empty="No approvals found"
+              initialSortKey="created_at"
+              initialDirection="desc"
               onRowClick={(row) => {
                 setSelected(row);
                 setComments(row.comments || "");

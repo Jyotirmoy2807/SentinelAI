@@ -40,6 +40,8 @@ export function AuditPage() {
               rows={rows}
               loading={list.isLoading}
               empty="No audit records found"
+              initialSortKey="timestamp"
+              initialDirection="desc"
               onRowClick={(row) => setRequestId(row.request_id)}
             />
           </CardBody>

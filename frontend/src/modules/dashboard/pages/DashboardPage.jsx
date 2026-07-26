@@ -56,13 +56,13 @@ export function DashboardPage() {
         <Card className="flex h-[620px] flex-col">
           <CardHeader title="Recent Executions" />
           <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
-            <DataTable columns={executionColumns} rows={data?.recent_executions || []} loading={isLoading} empty="No executions yet" />
+            <DataTable columns={executionColumns} rows={data?.recent_executions || []} loading={isLoading} empty="No executions yet" initialSortKey="created_at" initialDirection="desc" />
           </CardBody>
         </Card>
         <Card className="flex h-[620px] flex-col">
           <CardHeader title="Recent Audit Events" />
           <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
-            <DataTable columns={auditColumns} rows={data?.recent_audit_events || []} loading={isLoading} empty="No audit events yet" />
+            <DataTable columns={auditColumns} rows={data?.recent_audit_events || []} loading={isLoading} empty="No audit events yet" initialSortKey="timestamp" initialDirection="desc" />
           </CardBody>
         </Card>
       </div>
