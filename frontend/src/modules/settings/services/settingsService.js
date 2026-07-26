@@ -8,5 +8,9 @@ export const settingsService = {
   async health() {
     const { data } = await apiClient.get("/health");
     return data;
+  },
+  async lookups() {
+    const { data } = await apiClient.get("/settings/lookups");
+    return data;
   }
 };

@@ -1,15 +1,4 @@
-import {
-  Activity,
-  Bot,
-  ClipboardCheck,
-  Database,
-  FlaskConical,
-  Gauge,
-  Home,
-  LandPlot,
-  Settings,
-  ShieldCheck
-} from "lucide-react";
+import { Bot, ClipboardCheck, Database, FlaskConical, Gauge, Home, Settings, ShieldCheck } from "lucide-react";
 
 export const navigationItems = [
   { label: "Dashboard", path: "/dashboard", icon: Gauge },

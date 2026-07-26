@@ -4,6 +4,7 @@ from sqlalchemy import JSON, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
+from app.utils.time import utc_now
 
 
 class EnterpriseAPI(Base):
@@ -14,13 +15,12 @@ class EnterpriseAPI(Base):
     adapter: Mapped[str] = mapped_column(String(80))
     version: Mapped[str] = mapped_column(String(32), default="1.0")
     status: Mapped[str] = mapped_column(String(32), default="ACTIVE", index=True)
-    permissions: Mapped[list[str]] = mapped_column(JSON, default=list)
+    supported_operations: Mapped[list[str]] = mapped_column(JSON, default=list)
     required_policies: Mapped[list[str]] = mapped_column(JSON, default=list)
-    allowed_agents: Mapped[list[str]] = mapped_column(JSON, default=list)
     endpoint_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
     )

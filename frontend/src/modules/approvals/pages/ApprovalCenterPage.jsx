@@ -41,7 +41,7 @@ export function ApprovalCenterPage() {
         title="Human Approval Center"
         description="Pending and completed governance reviews with the context needed to resume or deny paused workflows."
       />
-      <div className="grid gap-5 xl:grid-cols-[1fr_440px]">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">
         <Card>
           <CardBody>
             <DataTable

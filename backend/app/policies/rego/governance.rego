@@ -1,137 +1,179 @@
 package sentinelai.governance
 
-deny_reasons := [reason | deny_reason[reason]]
-approval_reasons := [reason | approval_reason[reason]]
+default decision := {"decision": "ALLOW", "matched_policy": "default_allow", "reasons": ["No governance or budget policy matched."]}
 
-budget_limits := {
-    "Finance-Controlled": {
-        "transaction_limit": 10000,
-        "approval_threshold": 2000,
-    },
-    "Sales-Refunds": {
-        "transaction_limit": 5000,
-        "approval_threshold": 500,
-    },
-    "Operations-Standard": {
-        "transaction_limit": 2500,
-        "approval_threshold": 1200,
-    },
-    "IT-Restricted": {
-        "transaction_limit": 800,
-        "approval_threshold": 300,
-    },
+decision := result if {
+	policy := selected_policy
+	result := {"decision": policy.decision, "matched_policy": policy.policy_id, "reasons": [policy.reason], "priority": policy.priority}
 }
 
-allowed_service if {
-    input.identity.allowedApis[_] == input.normalizedExecution.service
+ranked_matches[key] := policy if {
+	some policy in policy_matches
+	key := sprintf("%06d:%s", [1000000 - policy.priority, policy.policy_id])
 }
 
-allowed_operation if {
-    input.identity.allowedOperations[_] == input.normalizedExecution.operation
+selected_policy := ranked_matches[keys[0]] if {
+	count(ranked_matches) > 0
+	keys := sort(object.keys(ranked_matches))
 }
 
-deny_reason contains reason if {
-    input.identity.status != "ACTIVE"
-    reason := "Agent Passport is not active."
+policy_matches contains policy if {
+	input.identity.status != "ACTIVE"
+	policy := {"decision": "DENY", "policy_id": "blocked_agent_deny", "priority": 990000, "reason": "Agent Passport is not active."}
 }
 
-deny_reason contains reason if {
-    not allowed_service
-    reason := sprintf(
-        "%s is not allowed for this Agent Passport.",
-        [input.normalizedExecution.service],
-    )
+policy_matches contains policy if {
+	input.normalizedExecution.operation == "delete_database"
+	policy := {"decision": "DENY", "policy_id": "destructive_action_deny", "priority": 980000, "reason": "Destructive database operations are forbidden."}
 }
 
-deny_reason contains reason if {
-    not allowed_operation
-    reason := sprintf(
-        "%s is not allowed for this Agent Passport.",
-        [input.normalizedExecution.operation],
-    )
+policy_matches contains policy if {
+	input.risk.score >= 70
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "high_risk_approval", "priority": 880000, "reason": "High NIST RMF risk score requires human approval."}
 }
 
-deny_reason contains reason if {
-    input.normalizedExecution.operation == "delete_database"
-    reason := "Destructive database operations are forbidden by OPA policy."
+policy_matches contains policy if {
+	input.identity.department == "Finance"
+	input.normalizedExecution.amount >= 5000
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "finance_amount_approval", "priority": 870000, "reason": "Finance transaction amount requires governance approval."}
 }
 
-deny_reason contains reason if {
-    contains(
-        lower(input.normalizedExecution.parameterText),
-        "bypass approval",
-    )
-    reason := "Governance bypass instructions are forbidden by OPA policy."
+policy_matches contains policy if {
+	input.identity.department == "Finance"
+	amount := input.normalizedExecution.amount
+	amount > 10000
+	policy := {"decision": "DENY", "policy_id": "budget_finance_controlled_transaction_limit", "priority": 900000, "reason": "Finance-Controlled transaction limit exceeded."}
 }
 
-deny_reason contains reason if {
-    input.normalizedExecution.service == "Payroll Service"
-    reason := "Payroll Service is restricted for autonomous agents."
+policy_matches contains policy if {
+	input.identity.department == "Finance"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 25000
+	policy := {"decision": "DENY", "policy_id": "budget_finance_controlled_daily_limit", "priority": 899999, "reason": "Finance-Controlled daily limit exceeded."}
 }
 
-deny_reason contains reason if {
-    input.normalizedExecution.amount >
-        budget_limits[input.identity.budgetProfile].transaction_limit
-
-    reason := sprintf(
-        "Amount %.2f exceeds transaction limit.",
-        [input.normalizedExecution.amount],
-    )
+policy_matches contains policy if {
+	input.identity.department == "Finance"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 250000
+	policy := {"decision": "DENY", "policy_id": "budget_finance_controlled_monthly_limit", "priority": 899998, "reason": "Finance-Controlled monthly limit exceeded."}
 }
 
-deny_reason contains reason if {
-    input.normalizedExecution.operation == "export_personal_data"
-    reason := "GDPR personal data export requires a dedicated governed workflow."
+policy_matches contains policy if {
+	input.identity.department == "Finance"
+	amount := input.normalizedExecution.amount
+	amount >= 5000
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_finance_controlled_approval_threshold", "priority": 899997, "reason": "Finance-Controlled approval threshold reached."}
 }
 
-approval_reason contains reason if {
-    count(deny_reasons) == 0
-
-    input.normalizedExecution.amount >=
-        budget_limits[input.identity.budgetProfile].approval_threshold
-
-    input.normalizedExecution.amount > 0
-
-    reason := "Transaction amount exceeds OPA approval threshold."
+policy_matches contains policy if {
+	input.identity.department == "HR"
+	amount := input.normalizedExecution.amount
+	amount > 3000
+	policy := {"decision": "DENY", "policy_id": "budget_hr_travel_transaction_limit", "priority": 899990, "reason": "HR-Travel transaction limit exceeded."}
 }
 
-approval_reason contains reason if {
-    count(deny_reasons) == 0
-    input.risk.score >= 70
-    reason := "NIST RMF risk score requires authorization review."
+policy_matches contains policy if {
+	input.identity.department == "HR"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 8000
+	policy := {"decision": "DENY", "policy_id": "budget_hr_travel_daily_limit", "priority": 899989, "reason": "HR-Travel daily limit exceeded."}
 }
 
-approval_reason contains reason if {
-    count(deny_reasons) == 0
-    input.normalizedExecution.service == "Payment Service"
-    input.normalizedExecution.amount > 2000
-    reason := "PCI DSS payment review is required for high-value payments."
+policy_matches contains policy if {
+	input.identity.department == "HR"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 60000
+	policy := {"decision": "DENY", "policy_id": "budget_hr_travel_monthly_limit", "priority": 899988, "reason": "HR-Travel monthly limit exceeded."}
 }
 
-decision := {
-    "decision": "DENY",
-    "matched_policy": "sentinelai/governance/deny",
-    "reasons": deny_reasons,
-} if {
-    count(deny_reasons) > 0
+policy_matches contains policy if {
+	input.identity.department == "HR"
+	amount := input.normalizedExecution.amount
+	amount >= 1000
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_hr_travel_approval_threshold", "priority": 899987, "reason": "HR-Travel approval threshold reached."}
 }
 
-decision := {
-    "decision": "REQUIRE_APPROVAL",
-    "matched_policy": "sentinelai/governance/approval",
-    "reasons": approval_reasons,
-} if {
-    count(deny_reasons) == 0
-    count(approval_reasons) > 0
+policy_matches contains policy if {
+	input.identity.department == "IT"
+	amount := input.normalizedExecution.amount
+	amount > 1000
+	policy := {"decision": "DENY", "policy_id": "budget_it_restricted_transaction_limit", "priority": 899970, "reason": "IT-Restricted transaction limit exceeded."}
 }
 
-decision := {
-    "decision": "ALLOW",
-    "matched_policy": "sentinelai/governance/allow",
-    "reasons": [
-        "OPA policy allowed governed enterprise execution.",
-    ],
-} if {
-    count(deny_reasons) == 0
-    count(approval_reasons) == 0
+policy_matches contains policy if {
+	input.identity.department == "IT"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 2500
+	policy := {"decision": "DENY", "policy_id": "budget_it_restricted_daily_limit", "priority": 899969, "reason": "IT-Restricted daily limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "IT"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 20000
+	policy := {"decision": "DENY", "policy_id": "budget_it_restricted_monthly_limit", "priority": 899968, "reason": "IT-Restricted monthly limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "IT"
+	amount := input.normalizedExecution.amount
+	amount >= 500
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_it_restricted_approval_threshold", "priority": 899967, "reason": "IT-Restricted approval threshold reached."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Operations"
+	amount := input.normalizedExecution.amount
+	amount > 4000
+	policy := {"decision": "DENY", "policy_id": "budget_operations_standard_transaction_limit", "priority": 899980, "reason": "Operations-Standard transaction limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Operations"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 12000
+	policy := {"decision": "DENY", "policy_id": "budget_operations_standard_daily_limit", "priority": 899979, "reason": "Operations-Standard daily limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Operations"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 100000
+	policy := {"decision": "DENY", "policy_id": "budget_operations_standard_monthly_limit", "priority": 899978, "reason": "Operations-Standard monthly limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Operations"
+	amount := input.normalizedExecution.amount
+	amount >= 1500
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_operations_standard_approval_threshold", "priority": 899977, "reason": "Operations-Standard approval threshold reached."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Sales"
+	amount := input.normalizedExecution.amount
+	amount > 5000
+	policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_transaction_limit", "priority": 899990, "reason": "Sales-Refunds transaction limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Sales"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 15000
+	policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_daily_limit", "priority": 899989, "reason": "Sales-Refunds daily limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Sales"
+	amount := input.normalizedExecution.amount
+	amount + 0 > 150000
+	policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_monthly_limit", "priority": 899988, "reason": "Sales-Refunds monthly limit exceeded."}
+}
+
+policy_matches contains policy if {
+	input.identity.department == "Sales"
+	amount := input.normalizedExecution.amount
+	amount >= 750
+	policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_sales_refunds_approval_threshold", "priority": 899987, "reason": "Sales-Refunds approval threshold reached."}
 }

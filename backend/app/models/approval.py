@@ -4,6 +4,7 @@ from sqlalchemy import JSON, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
+from app.utils.time import utc_now
 
 
 class Approval(Base):
@@ -23,10 +24,10 @@ class Approval(Base):
     reason: Mapped[str] = mapped_column(String(500), default="")
     comments: Mapped[str] = mapped_column(String(1000), default="")
     state_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
     )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

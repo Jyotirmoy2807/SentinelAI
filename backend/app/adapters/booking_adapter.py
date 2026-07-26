@@ -5,6 +5,7 @@ from app.adapters.base import AdapterExecutionResult, EnterpriseAdapter
 
 class BookingAdapter(EnterpriseAdapter):
     adapter_name = "BookingAdapter"
+    SUPPORTED_OPERATIONS = ("confirm_booking", "cancel_booking")
 
     def validate_request(self, request: dict) -> None:
         if not request.get("parameters", {}).get("booking_id"):

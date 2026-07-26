@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from uuid import uuid4
 
 from app.models.approval import Approval
 from app.repositories.approval_repository import ApprovalRepository
 from app.utils.serialization import json_safe
+from app.utils.time import utc_iso_ms, utc_now
 
 
 class ApprovalService:
@@ -35,7 +36,7 @@ class ApprovalService:
             "required": True,
             "status": "PENDING",
             "approver": "Governance Manager",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utc_iso_ms(),
             "comments": "",
             "reason": reason,
         }
@@ -55,7 +56,7 @@ class ApprovalService:
                 "reason": reason,
                 "comments": "",
                 "state_snapshot": json_safe(snapshot),
-                "expires_at": datetime.utcnow() + timedelta(hours=8),
+                "expires_at": utc_now() + timedelta(hours=8),
             }
         )
         self.repository.db.commit()
@@ -68,7 +69,7 @@ class ApprovalService:
                 "status": "APPROVED",
                 "approver": approver,
                 "comments": comments,
-                "updated_at": datetime.utcnow(),
+                "updated_at": utc_now(),
             },
         )
         self.repository.db.commit()
@@ -81,7 +82,7 @@ class ApprovalService:
                 "status": "REJECTED",
                 "approver": approver,
                 "comments": comments,
-                "updated_at": datetime.utcnow(),
+                "updated_at": utc_now(),
             },
         )
         self.repository.db.commit()
@@ -89,7 +90,7 @@ class ApprovalService:
 
     def apply_existing_decision(self, state: dict, approval: Approval) -> dict:
         approval_state = self._to_state(approval)
-        approval_state["timestamp"] = datetime.utcnow().isoformat()
+        approval_state["timestamp"] = utc_iso_ms()
         return approval_state
 
     def _approval_reason(self, state: dict) -> str:
@@ -109,7 +110,7 @@ class ApprovalService:
             "required": True,
             "status": approval.status,
             "approver": approval.approver,
-            "timestamp": approval.updated_at.isoformat() if approval.updated_at else None,
+            "timestamp": utc_iso_ms(approval.updated_at) if approval.updated_at else None,
             "comments": approval.comments,
             "reason": approval.reason,
         }

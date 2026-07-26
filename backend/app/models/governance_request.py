@@ -4,6 +4,7 @@ from sqlalchemy import JSON, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
+from app.utils.time import utc_now
 
 
 class GovernanceRequest(Base):
@@ -20,5 +21,5 @@ class GovernanceRequest(Base):
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)
     duration_ms: Mapped[float] = mapped_column(Float, default=0.0)
     state_snapshot: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

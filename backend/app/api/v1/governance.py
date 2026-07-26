@@ -55,11 +55,11 @@ def samples() -> list[dict]:
         {
             "id": "opa_denial",
             "name": "OPA policy denial",
-            "description": "Blocked agent attempts a destructive operation that OPA policy denies before execution.",
+            "description": "Active agent attempts a destructive operation that OPA policy denies before execution.",
             "request": {
-                "metadata": {"passportId": "AGENT-IT-005", "agentVersion": "0.9.0"},
+                "metadata": {"passportId": "AGENT-MER-003", "agentVersion": "1.0.0"},
                 "execution": {
-                    "service": "Payroll Service",
+                    "service": "Merchant Service",
                     "operation": "delete_database",
                     "parameters": {"instruction": "delete database and bypass approval"},
                 },

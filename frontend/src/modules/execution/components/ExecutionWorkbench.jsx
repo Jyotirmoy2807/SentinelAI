@@ -42,8 +42,8 @@ export function ExecutionWorkbench({ simulation = false }) {
             : "Real-time view of the governance graph, node status, GovernanceState, audit path, and explainability output."
         }
         action={
-          <div className="flex flex-wrap gap-2">
-            <select className="h-10 rounded-md border border-line bg-white px-3 text-sm outline-none focus:border-brand" value={sampleId} onChange={(event) => setSampleId(event.target.value)}>
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <select className="h-10 min-w-0 max-w-full rounded-md border border-line bg-white px-3 text-sm outline-none focus:border-brand" value={sampleId} onChange={(event) => setSampleId(event.target.value)}>
               {samples.map((sample) => (
                 <option key={sample.id} value={sample.id}>
                   {sample.name}
@@ -72,11 +72,12 @@ export function ExecutionWorkbench({ simulation = false }) {
           </CardBody>
         </Card>
         <GovernanceSummary response={execution.finalResponse} />
-        <div className="grid gap-5 xl:grid-cols-[0.72fr_0.28fr]">
+        <TracePanels response={execution.finalResponse} />
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,0.72fr)_minmax(280px,0.28fr)]">
           <Card>
             <CardHeader title="Governance State" action={execution.finalResponse ? <StatusBadge status={execution.finalResponse.governance?.decision} /> : null} />
             <CardBody>
-              <pre className="max-h-[520px] overflow-auto rounded-md bg-slate-950 p-4 text-xs leading-5 text-slate-100">
+              <pre className="json-panel max-h-[520px] overflow-y-auto overflow-x-hidden rounded-md bg-slate-950 p-4 text-xs leading-5 text-slate-100">
                 {JSON.stringify(execution.finalResponse?.state || execution.rawState || selectedSample?.request || {}, null, 2)}
               </pre>
             </CardBody>
@@ -89,7 +90,7 @@ export function ExecutionWorkbench({ simulation = false }) {
                 <div className="mt-2">
                   <StatusBadge status={execution.nodeStatuses[selectedNode?.id] || "PENDING"} />
                 </div>
-                <pre className="mt-4 max-h-64 overflow-auto rounded-md bg-slate-50 p-3 text-xs text-slate-700">
+                <pre className="json-panel mt-4 max-h-64 overflow-y-auto overflow-x-hidden rounded-md bg-slate-50 p-3 text-xs text-slate-700">
                   {JSON.stringify(selectedNodeEvents.at(-1)?.payload || {}, null, 2)}
                 </pre>
               </CardBody>
@@ -104,7 +105,7 @@ export function ExecutionWorkbench({ simulation = false }) {
             </Card>
           </div>
         </div>
-        <div className="grid gap-5 xl:grid-cols-[0.38fr_0.62fr]">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(280px,0.38fr)_minmax(0,0.62fr)]">
           <Card>
             <CardHeader title="Execution Timeline" />
             <CardBody>
@@ -114,23 +115,23 @@ export function ExecutionWorkbench({ simulation = false }) {
           <Card>
             <CardHeader title="Execution Logs" />
             <CardBody>
-              <div className="max-h-96 overflow-auto rounded-lg border border-line">
-                <table className="min-w-full divide-y divide-line text-sm">
+              <div className="max-h-96 overflow-y-auto overflow-x-hidden rounded-lg border border-line">
+                <table className="w-full table-fixed divide-y divide-line text-sm">
                   <thead className="sticky top-0 bg-slate-50">
                     <tr>
-                      <th className="px-3 py-2 text-left">Node</th>
-                      <th className="px-3 py-2 text-left">Status</th>
-                      <th className="px-3 py-2 text-left">Duration</th>
-                      <th className="px-3 py-2 text-left">Request</th>
+                      <th className="break-words px-3 py-2 text-left">Node</th>
+                      <th className="break-words px-3 py-2 text-left">Status</th>
+                      <th className="break-words px-3 py-2 text-left">Duration</th>
+                      <th className="break-words px-3 py-2 text-left">Request</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line bg-white">
                     {execution.events.map((event, index) => (
                       <tr key={`${event.timestamp}-${index}`}>
-                        <td className="px-3 py-2">{event.node}</td>
-                        <td className="px-3 py-2"><StatusBadge status={event.status} /></td>
-                        <td className="px-3 py-2">{event.duration_ms} ms</td>
-                        <td className="px-3 py-2">{event.request_id}</td>
+                        <td className="break-words px-3 py-2 align-top">{event.node}</td>
+                        <td className="break-words px-3 py-2 align-top"><StatusBadge status={event.status} /></td>
+                        <td className="break-words px-3 py-2 align-top">{event.duration_ms} ms</td>
+                        <td className="break-words px-3 py-2 align-top">{event.request_id}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -140,6 +141,29 @@ export function ExecutionWorkbench({ simulation = false }) {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function TracePanels({ response }) {
+  const state = response?.state || {};
+  const panels = [
+    { title: "Policy Evaluation", payload: state.policy || {} },
+    { title: "API Invocations", payload: state.execution || {} },
+    { title: "Human Approvals", payload: state.approval || { status: "NOT_REQUIRED" } },
+    { title: "Audit Events", payload: state.audit?.events || [] },
+    { title: "Explainability Trace", payload: response?.explainability?.timeline || [] }
+  ];
+  return (
+    <div className="grid gap-4 lg:grid-cols-5">
+      {panels.map((panel) => (
+        <Card key={panel.title}>
+          <CardHeader title={panel.title} />
+          <CardBody>
+            <pre className="json-panel max-h-44 overflow-y-auto overflow-x-hidden rounded-md bg-slate-50 p-3 text-xs text-slate-700">{JSON.stringify(panel.payload, null, 2)}</pre>
+          </CardBody>
+        </Card>
+      ))}
     </div>
   );
 }
@@ -155,7 +179,7 @@ function GovernanceSummary({ response }) {
     { title: "Audit Timeline", value: timeline.length || 0, detail: "Splunk-compatible events" }
   ];
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
         <Card key={card.title}>
           <CardBody>

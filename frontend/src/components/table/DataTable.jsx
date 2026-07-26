@@ -31,7 +31,7 @@ export function DataTable({ columns, rows, loading, empty = "No records", onRowC
   }
 
   return (
-    <div>
+    <div className="min-w-0 overflow-x-hidden">
       <div className="mb-3 flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2">
         <Search className="h-4 w-4 text-slate-400" />
         <input
@@ -44,13 +44,39 @@ export function DataTable({ columns, rows, loading, empty = "No records", onRowC
           placeholder="Search"
         />
       </div>
-      <div className="overflow-hidden rounded-lg border border-line bg-white">
-        <table className="min-w-full divide-y divide-line text-sm">
+      <div className="rounded-lg border border-line bg-white md:hidden">
+        {loading ? (
+          <div className="px-4 py-8 text-center text-sm text-slate-500">Loading records</div>
+        ) : pageRows.length ? (
+          <div className="divide-y divide-line">
+            {pageRows.map((row) => (
+              <div
+                key={row.id || row.request_id || row.approval_id || row.policy_id || JSON.stringify(row)}
+                onClick={() => onRowClick?.(row)}
+                className={`block w-full min-w-0 px-4 py-3 text-left ${onRowClick ? "cursor-pointer hover:bg-slate-50" : ""}`}
+              >
+                <div className="grid gap-2">
+                  {columns.map((column) => (
+                    <div key={column.key} className="min-w-0">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{column.header}</div>
+                      <div className="mt-1 break-words text-sm text-slate-700">{column.render ? column.render(row) : row[column.key]}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center text-sm text-slate-500">{empty}</div>
+        )}
+      </div>
+      <div className="hidden overflow-x-hidden rounded-lg border border-line bg-white md:block">
+        <table className="w-full table-fixed divide-y divide-line text-sm">
           <thead className="bg-slate-50">
             <tr>
               {columns.map((column) => (
-                <th key={column.key} className="px-4 py-3 text-left font-semibold text-slate-600">
-                  <button className="inline-flex items-center gap-1" onClick={() => toggleSort(column.key)}>
+                <th key={column.key} className="break-words px-3 py-3 text-left font-semibold text-slate-600">
+                  <button className="inline-flex max-w-full items-center gap-1 text-left" onClick={() => toggleSort(column.key)}>
                     {column.header}
                     {sortKey === column.key ? direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" /> : null}
                   </button>
@@ -73,7 +99,7 @@ export function DataTable({ columns, rows, loading, empty = "No records", onRowC
                   className={onRowClick ? "cursor-pointer hover:bg-slate-50" : ""}
                 >
                   {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-3 text-slate-700">
+                    <td key={column.key} className="break-words px-3 py-3 align-top text-slate-700">
                       {column.render ? column.render(row) : row[column.key]}
                     </td>
                   ))}
@@ -93,7 +119,7 @@ export function DataTable({ columns, rows, loading, empty = "No records", onRowC
         <span>
           Page {page} of {pageCount}
         </span>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <button className="rounded border border-line px-3 py-1 disabled:opacity-40" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>
             Previous
           </button>

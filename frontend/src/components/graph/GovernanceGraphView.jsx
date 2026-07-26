@@ -1,39 +1,82 @@
-import { Background, Controls, ReactFlow } from "@xyflow/react";
-import { useMemo } from "react";
+import { Background, Controls, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
+import { useEffect, useMemo } from "react";
 import { governanceEdges, governanceNodes } from "../../modules/execution/constants.js";
 import { useUiStore } from "../../store/uiStore.js";
 
-export function GovernanceGraphView({ statuses }) {
+const fitViewOptions = { padding: 0.08, minZoom: 0.68, maxZoom: 1 };
+
+export function GovernanceGraphView({ statuses = {} }) {
   const selectNode = useUiStore((state) => state.selectNode);
   const selectedNodeId = useUiStore((state) => state.selectedNodeId);
-  const nodes = useMemo(
-    () =>
-      governanceNodes.map((node) => ({
-        ...node,
-        data: { label: <NodeLabel label={node.label} status={statuses[node.id] || "PENDING"} /> },
-        className: node.id === selectedNodeId ? "ring-2 ring-brand" : "",
-        style: nodeStyle(statuses[node.id])
-      })),
-    [statuses, selectedNodeId]
+
+  const initialNodes = useMemo(
+    () => governanceNodes.map((node) => decorateNode(node, "PENDING", false)),
+    []
   );
-  const edges = useMemo(
-    () =>
-      governanceEdges.map((edge) => ({
-        ...edge,
-        animated: statuses[edge.source] === "RUNNING",
-        style: { stroke: statuses[edge.source] === "RUNNING" ? "#1d4ed8" : "#cbd5e1", strokeWidth: 2 }
-      })),
-    [statuses]
+  const initialEdges = useMemo(
+    () => governanceEdges.map((edge) => decorateEdge(edge, {})),
+    []
   );
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  useEffect(() => {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => decorateNode(node, statuses[node.id] || "PENDING", node.id === selectedNodeId))
+    );
+  }, [selectedNodeId, setNodes, statuses]);
+
+  useEffect(() => {
+    setEdges((currentEdges) => currentEdges.map((edge) => decorateEdge(edge, statuses)));
+  }, [setEdges, statuses]);
 
   return (
-    <div className="h-[420px] rounded-lg border border-line bg-white">
-      <ReactFlow nodes={nodes} edges={edges} fitView onNodeClick={(_, node) => selectNode(node.id)} nodesDraggable={false} nodesConnectable={false}>
-        <Background color="#e2e8f0" gap={18} />
+    <div className="h-[460px] min-w-0 rounded-lg border border-line bg-white">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={(_, node) => selectNode(node.id)}
+        fitView
+        fitViewOptions={fitViewOptions}
+        minZoom={0.55}
+        maxZoom={1.2}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background color="#dbe3ef" gap={18} />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>
   );
+}
+
+function decorateNode(node, status, selected) {
+  return {
+    ...node,
+    data: { label: <NodeLabel label={node.label || node.data?.rawLabel} status={status} />, rawLabel: node.label || node.data?.rawLabel },
+    className: selected ? "ring-2 ring-brand" : "",
+    style: nodeStyle(status)
+  };
+}
+
+function decorateEdge(edge, statuses) {
+  const active = statuses[edge.source] === "RUNNING" || statuses[edge.target] === "RUNNING";
+  const completed = statuses[edge.source] === "COMPLETED" && statuses[edge.target] && statuses[edge.target] !== "PENDING";
+  return {
+    ...edge,
+    animated: active,
+    style: {
+      stroke: active ? "#1d4ed8" : completed ? "#059669" : "#94a3b8",
+      strokeWidth: active ? 2.6 : 2
+    },
+    labelStyle: { fill: "#475569", fontSize: 11, fontWeight: 700, textTransform: "uppercase" },
+    labelBgStyle: { fill: "#ffffff", fillOpacity: 0.9 },
+    markerEnd: { type: "arrowclosed", color: active ? "#1d4ed8" : completed ? "#059669" : "#94a3b8" }
+  };
 }
 
 function NodeLabel({ label, status }) {
@@ -50,7 +93,7 @@ function nodeStyle(status) {
     borderRadius: 8,
     border: "1px solid #d8dee9",
     padding: 12,
-    width: 190,
+    width: 176,
     fontSize: 13,
     fontWeight: 700,
     color: "#172033"
@@ -61,7 +104,7 @@ function nodeStyle(status) {
     DENIED: { background: "#fef2f2", border: "1px solid #fecaca" },
     WAITING_APPROVAL: { background: "#fffbeb", border: "1px solid #fde68a" },
     FAILED: { background: "#fef2f2", border: "2px solid #b91c1c" },
-    PENDING: { background: "#ffffff" }
+    PENDING: { background: "#f8fafc", border: "1px solid #cbd5e1" }
   };
   return { ...base, ...(tones[status] || tones.PENDING) };
 }

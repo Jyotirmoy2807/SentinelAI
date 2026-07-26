@@ -5,6 +5,7 @@ from app.adapters.base import AdapterExecutionResult, EnterpriseAdapter
 
 class RefundAdapter(EnterpriseAdapter):
     adapter_name = "RefundAdapter"
+    SUPPORTED_OPERATIONS = ("issue_refund", "read_refund")
 
     def validate_request(self, request: dict) -> None:
         if "amount" not in request.get("parameters", {}):

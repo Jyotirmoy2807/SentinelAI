@@ -12,7 +12,6 @@ class KPI(BaseModel):
 
 class DashboardResponse(BaseModel):
     kpis: list[KPI]
-    request_trend: list[dict[str, Any]] = Field(default_factory=list)
-    risk_distribution: list[dict[str, Any]] = Field(default_factory=list)
-    approval_trend: list[dict[str, Any]] = Field(default_factory=list)
-    recent_activity: list[dict[str, Any]] = Field(default_factory=list)
+    system_health: dict[str, Any] = Field(default_factory=dict)
+    recent_executions: list[dict[str, Any]] = Field(default_factory=list)
+    recent_audit_events: list[dict[str, Any]] = Field(default_factory=list)

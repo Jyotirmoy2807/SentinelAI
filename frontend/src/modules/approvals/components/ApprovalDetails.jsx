@@ -18,8 +18,8 @@ export function ApprovalDetails({ approval, comments, setComments, onApprove, on
       <CardHeader title={approval.approval_id} action={<StatusBadge status={approval.status} />}>
         {approval.request_id}
       </CardHeader>
-      <CardBody className="space-y-5">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      <CardBody className="max-h-[calc(100vh-12rem)] space-y-5 overflow-y-auto overflow-x-hidden">
+        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <Info label="Agent" value={approval.agent_name} />
           <Info label="Passport" value={approval.passport_id} />
           <Info label="Service" value={approval.service} />
@@ -32,9 +32,9 @@ export function ApprovalDetails({ approval, comments, setComments, onApprove, on
         <div className="rounded-md border border-line bg-slate-50 p-3 text-sm text-slate-600">{approval.reason}</div>
         <label className="block text-sm font-medium text-slate-600">
           Comments
-          <textarea rows={4} className="mt-1 w-full rounded-md border border-line px-3 py-2 outline-none focus:border-brand" value={comments} onChange={(event) => setComments(event.target.value)} />
+          <textarea rows={4} className="mt-1 w-full min-w-0 rounded-md border border-line px-3 py-2 outline-none focus:border-brand" value={comments} onChange={(event) => setComments(event.target.value)} />
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={onApprove} disabled={approval.status !== "PENDING"}>
             Approve
           </Button>
@@ -43,7 +43,7 @@ export function ApprovalDetails({ approval, comments, setComments, onApprove, on
           </Button>
         </div>
         {response ? (
-          <pre className="max-h-72 overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(response, null, 2)}</pre>
+          <pre className="json-panel max-h-72 overflow-y-auto overflow-x-hidden rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(response, null, 2)}</pre>
         ) : null}
       </CardBody>
     </Card>
@@ -52,9 +52,9 @@ export function ApprovalDetails({ approval, comments, setComments, onApprove, on
 
 function Info({ label, value }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="text-xs font-semibold uppercase text-slate-400">{label}</div>
-      <div className="mt-1 font-medium text-ink">{value}</div>
+      <div className="mt-1 break-words font-medium text-ink">{value}</div>
     </div>
   );
 }

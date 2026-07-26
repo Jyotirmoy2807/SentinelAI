@@ -8,6 +8,7 @@ This refactor removes the old standalone AI Firewall, Budget Engine, and Complia
 - LangGraph owns orchestration and conditional routing.
 - Graph nodes are thin service callers and live-event emitters.
 - NIST RMF risk logic lives in `RiskService`.
+- Governance Policies and Budget Policies are stored as JSON records and compiled into one `governance.rego` bundle.
 - Policy decisions are delegated to OPA through `OpaPolicyAdapter`.
 - Splunk-compatible audit events are emitted through an abstract audit sink.
 - Explainability reads audit events and does not maintain a separate execution history.
@@ -28,9 +29,18 @@ Implemented nodes:
 9. Explainability
 10. Response Builder
 
+## Policy Management
+
+JSON policy records are the source of truth.
+
+- Governance Policies support create, edit, delete, duplicate, enable, and disable.
+- Budget Policies have separate CRUD and contain only name, department, daily/monthly/transaction limits, approval threshold, spend totals, and status.
+- Deployment generates a single `governance.rego`, runs `opa fmt`, runs `opa check`, records deployment status, and relies on OPA watch mode for reload.
+- Policy versions capture snapshots for history, compare, and restore.
+
 ## OPA Policy Scope
 
-The bundled Rego policy covers:
+Generated Rego covers:
 
 - blocked APIs
 - forbidden tools/actions

@@ -15,7 +15,10 @@ def list_agents(services: ServiceContainer = Depends(get_services)):
 
 @router.post("", response_model=AgentRead, status_code=status.HTTP_201_CREATED)
 def create_agent(payload: AgentCreate, services: ServiceContainer = Depends(get_services)):
-    return services.agents.register_agent(payload.model_dump())
+    try:
+        return services.agents.register_agent(payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/{agent_id}", response_model=AgentRead)
@@ -31,7 +34,10 @@ def update_agent(agent_id: int, payload: AgentUpdate, services: ServiceContainer
     agent = services.agents.get_agent(agent_id)
     if agent is None:
         raise HTTPException(status_code=404, detail="Agent not found")
-    return services.agents.update_agent(agent, payload.model_dump(exclude_unset=True))
+    try:
+        return services.agents.update_agent(agent, payload.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/{agent_id}/suspend", response_model=AgentRead)

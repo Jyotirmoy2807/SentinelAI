@@ -28,6 +28,14 @@ class ExecutionService:
             )
         try:
             adapter = self.adapter_factory.get_adapter(api.adapter)
+            operation = normalized_execution.get("operation")
+            if operation not in (api.supported_operations or []):
+                return self._record_failure(
+                    request_id,
+                    api.adapter,
+                    normalized_execution,
+                    f"Operation {operation} is not registered for {api.service_name}.",
+                )
             result = adapter.execute(normalized_execution)
             execution = self.execution_repository.create(
                 {

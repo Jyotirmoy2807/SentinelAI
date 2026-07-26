@@ -1,10 +1,10 @@
-from datetime import datetime
 from uuid import uuid4
 
 from app.adapters.audit_sink import AuditSink
 from app.repositories.audit_repository import AuditRepository
 from app.repositories.governance_request_repository import GovernanceRequestRepository
 from app.utils.serialization import json_safe
+from app.utils.time import utc_now
 
 
 class AuditService:
@@ -37,7 +37,7 @@ class AuditService:
             "risk_score": risk_score,
             "duration_ms": float(metadata.get("execution_duration_ms") or 0),
             "state_snapshot": json_safe(state),
-            "completed_at": None if decision == "REQUIRE_APPROVAL" else datetime.utcnow(),
+            "completed_at": None if decision == "REQUIRE_APPROVAL" else utc_now(),
         }
         if existing_request:
             self.request_repository.update(existing_request, request_data)

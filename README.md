@@ -38,7 +38,7 @@ backend/
     database/        SQLite setup and seed data
 frontend/
   src/
-    modules/         Dashboard, agents, governance, enterprise, live execution, approvals, audit, settings, simulation
+    modules/         Dashboard, agents, governance, enterprise, approvals, audit, settings, simulation
 context/             Original architecture documents
 docs/                Implementation notes
 ```
@@ -83,6 +83,8 @@ npm run dev
 
 Frontend URL: `http://localhost:5173`
 
+The console redirects `/` to `/dashboard` and provides a dedicated 404 page for unknown routes.
+
 Set `VITE_API_BASE_URL` if the backend is not running at `http://localhost:8000/api/v1`.
 
 ## Demo Passports
@@ -98,7 +100,12 @@ Set `VITE_API_BASE_URL` if the backend is not running at `http://localhost:8000/
 - `GET /api/v1/health`
 - `GET /api/v1/dashboard`
 - `GET /api/v1/policies`
-- `POST /api/v1/policies`
+- `GET /api/v1/policies/governance`
+- `POST /api/v1/policies/governance`
+- `GET /api/v1/policies/budgets`
+- `POST /api/v1/policies/budgets`
+- `POST /api/v1/policies/deploy`
+- `GET /api/v1/policies/history`
 - `POST /api/v1/governance/execute`
 - `POST /api/v1/governance/simulate`
 - `GET /api/v1/governance/samples`
@@ -108,3 +115,5 @@ Set `VITE_API_BASE_URL` if the backend is not running at `http://localhost:8000/
 - `GET /api/v1/audit`
 
 The app includes a prototype migration that rebuilds the old v1 `audit_logs` table into the v2 Splunk-compatible schema on startup.
+
+Initial seed data is limited to Agent Passports, Enterprise APIs, Governance Policies, and Budget Policies. Runtime tables such as audit logs, approvals, execution history, and workflow history are populated dynamically during execution.

@@ -2,6 +2,9 @@ export function StatusBadge({ status }) {
   const normalized = String(status || "UNKNOWN").toUpperCase();
   const tones = {
     ACTIVE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    HEALTHY: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    DEPLOYED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    PASSED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     ALLOW: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     APPROVED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     SUCCESS: "bg-emerald-50 text-emerald-700 ring-emerald-200",
@@ -19,6 +22,7 @@ export function StatusBadge({ status }) {
     INACTIVE: "bg-slate-100 text-slate-600 ring-slate-200",
     MAINTENANCE: "bg-purple-50 text-purple-700 ring-purple-200",
     FAILED: "bg-red-50 text-red-700 ring-red-200",
+    ERROR: "bg-red-50 text-red-700 ring-red-200",
     SIMULATED: "bg-cyan-50 text-cyan-700 ring-cyan-200"
   };
   return (

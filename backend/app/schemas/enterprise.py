@@ -11,9 +11,8 @@ class EnterpriseAPIBase(ORMModel):
     adapter: str
     version: str = "1.0"
     status: str = "ACTIVE"
-    permissions: list[str] = Field(default_factory=list)
+    supported_operations: list[str] = Field(default_factory=list)
     required_policies: list[str] = Field(default_factory=list)
-    allowed_agents: list[str] = Field(default_factory=list)
     endpoint_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -26,9 +25,8 @@ class EnterpriseAPIUpdate(ORMModel):
     adapter: str | None = None
     version: str | None = None
     status: str | None = None
-    permissions: list[str] | None = None
+    supported_operations: list[str] | None = None
     required_policies: list[str] | None = None
-    allowed_agents: list[str] | None = None
     endpoint_metadata: dict[str, Any] | None = None
 
 

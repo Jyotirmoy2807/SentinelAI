@@ -5,6 +5,7 @@ from app.adapters.base import AdapterExecutionResult, EnterpriseAdapter
 
 class InvoiceAdapter(EnterpriseAdapter):
     adapter_name = "InvoiceAdapter"
+    SUPPORTED_OPERATIONS = ("create_invoice", "read_invoice")
 
     def validate_request(self, request: dict) -> None:
         if not request.get("parameters", {}).get("invoice_id"):

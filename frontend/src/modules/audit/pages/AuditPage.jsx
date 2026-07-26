@@ -32,7 +32,7 @@ export function AuditPage() {
         title="Audit & Explainability"
         description="Splunk-compatible governance events, decision trail, request detail, execution evidence, and reasoning context."
       />
-      <div className="grid gap-5 xl:grid-cols-[1fr_460px]">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,460px)]">
         <Card>
           <CardBody>
             <DataTable

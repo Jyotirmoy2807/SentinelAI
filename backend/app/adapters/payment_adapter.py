@@ -5,6 +5,7 @@ from app.adapters.base import AdapterExecutionResult, EnterpriseAdapter
 
 class PaymentAdapter(EnterpriseAdapter):
     adapter_name = "PaymentAdapter"
+    SUPPORTED_OPERATIONS = ("process_payment", "read_payment")
 
     def validate_request(self, request: dict) -> None:
         parameters = request.get("parameters", {})

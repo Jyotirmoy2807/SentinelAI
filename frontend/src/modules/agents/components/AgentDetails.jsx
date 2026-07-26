@@ -7,7 +7,7 @@ export function AgentDetails({ agent }) {
     return (
       <Card>
         <CardBody>
-          <div className="text-sm text-slate-500">Select an agent to inspect passport, permissions, OPA profile, and activity.</div>
+          <div className="text-sm text-slate-500">Select an agent to inspect passport, API access, OPA profile, and activity.</div>
         </CardBody>
       </Card>
     );
@@ -17,8 +17,8 @@ export function AgentDetails({ agent }) {
       <CardHeader title={agent.name}>
         {agent.passport_id}
       </CardHeader>
-      <CardBody className="space-y-5">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      <CardBody className="max-h-[calc(100vh-12rem)] space-y-5 overflow-y-auto overflow-x-hidden">
+        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <Info label="Department" value={agent.department} />
           <Info label="Owner" value={agent.owner} />
           <Info label="Trust Score" value={agent.trust_score} />
@@ -44,20 +44,20 @@ export function AgentDetails({ agent }) {
 
 function Info({ label, value }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="text-xs font-semibold uppercase text-slate-400">{label}</div>
-      <div className="mt-1 font-medium text-ink">{value}</div>
+      <div className="mt-1 break-words font-medium text-ink">{value}</div>
     </div>
   );
 }
 
 function Section({ title, items }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="mb-2 text-xs font-semibold uppercase text-slate-400">{title}</div>
       <div className="flex flex-wrap gap-2">
         {items?.map((item) => (
-          <span key={item} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
+          <span key={item} className="max-w-full break-words rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
             {item}
           </span>
         ))}

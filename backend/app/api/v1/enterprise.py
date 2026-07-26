@@ -15,7 +15,15 @@ def list_apis(services: ServiceContainer = Depends(get_services)):
 
 @router.post("", response_model=EnterpriseAPIRead, status_code=status.HTTP_201_CREATED)
 def create_api(payload: EnterpriseAPICreate, services: ServiceContainer = Depends(get_services)):
-    return services.enterprise_registry.register_api(payload.model_dump())
+    try:
+        return services.enterprise_registry.register_api(payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/adapters/catalog")
+def adapter_catalog(services: ServiceContainer = Depends(get_services)):
+    return services.enterprise_registry.adapter_metadata()
 
 
 @router.get("/{api_id}", response_model=EnterpriseAPIRead)
@@ -31,7 +39,10 @@ def update_api(api_id: int, payload: EnterpriseAPIUpdate, services: ServiceConta
     api = services.enterprise_registry.get_api(api_id)
     if api is None:
         raise HTTPException(status_code=404, detail="Enterprise API not found")
-    return services.enterprise_registry.update_api(api, payload.model_dump(exclude_unset=True))
+    try:
+        return services.enterprise_registry.update_api(api, payload.model_dump(exclude_unset=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/{api_id}/activate", response_model=EnterpriseAPIRead)

@@ -16,6 +16,7 @@ class AdapterExecutionResult:
 
 class EnterpriseAdapter(ABC):
     adapter_name: str
+    SUPPORTED_OPERATIONS: tuple[str, ...] = ()
 
     @abstractmethod
     def validate_request(self, request: dict[str, Any]) -> None:

@@ -9,9 +9,11 @@ import { formatDate } from "../../../utils/format.js";
 import { AgentDetails } from "../components/AgentDetails.jsx";
 import { AgentFormModal } from "../components/AgentFormModal.jsx";
 import { useAgents } from "../hooks/useAgents.js";
+import { useGovernanceResources } from "../../governance/hooks/useGovernanceResources.js";
 
 export function AgentsPage() {
   const { data = [], isLoading, createAgent, updateAgent, suspendAgent, activateAgent, blockAgent, deleteAgent } = useAgents();
+  const governance = useGovernanceResources();
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -63,7 +65,7 @@ export function AgentsPage() {
     <div>
       <PageHeader
         title="Agent Management"
-        description="Managed Agent Passports, permissions, OPA policy profiles, trust scores, and execution posture for autonomous AI agents."
+        description="Managed Agent Passports, API access, OPA policy profiles, trust scores, and execution posture for autonomous AI agents."
         action={
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
@@ -71,7 +73,7 @@ export function AgentsPage() {
           </Button>
         }
       />
-      <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
         <Card>
           <CardBody>
             <DataTable columns={columns} rows={data} loading={isLoading} empty="No agents registered" onRowClick={setSelected} />
@@ -79,7 +81,7 @@ export function AgentsPage() {
         </Card>
         <AgentDetails agent={selected || data[0]} />
       </div>
-      <AgentFormModal open={modalOpen} onClose={() => setModalOpen(false)} agent={editing} onSubmit={submit} />
+      <AgentFormModal open={modalOpen} onClose={() => setModalOpen(false)} agent={editing} onSubmit={submit} lookups={governance.lookups.data} />
     </div>
   );
 }

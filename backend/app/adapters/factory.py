@@ -24,3 +24,15 @@ class EnterpriseAdapterFactory:
 
     def list_adapters(self) -> list[str]:
         return sorted(self._adapters.keys())
+
+    def list_adapter_metadata(self) -> list[dict]:
+        return [
+            {
+                "name": name,
+                "supported_operations": list(adapter.SUPPORTED_OPERATIONS),
+            }
+            for name, adapter in sorted(self._adapters.items())
+        ]
+
+    def supported_operations(self, adapter_name: str) -> list[str]:
+        return list(self.get_adapter(adapter_name).SUPPORTED_OPERATIONS)

@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     opa_decision_path: str = "/v1/data/sentinelai/governance/decision"
     opa_policy_bundle_path: str = "./app/policies/rego"
     audit_sink: str = "sqlite-splunk"
+    log_level: str = "INFO"
     request_timeout_seconds: int = Field(default=30, ge=1)
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")

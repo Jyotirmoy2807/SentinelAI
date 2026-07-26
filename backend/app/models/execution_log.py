@@ -4,6 +4,7 @@ from sqlalchemy import JSON, DateTime, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
+from app.utils.time import utc_now
 
 
 class ExecutionLog(Base):
@@ -19,4 +20,4 @@ class ExecutionLog(Base):
     retries: Mapped[int] = mapped_column(Integer, default=0)
     request_payload: Mapped[dict] = mapped_column(JSON, default=dict)
     response_payload: Mapped[dict] = mapped_column(JSON, default=dict)
-    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

@@ -5,6 +5,7 @@ from app.adapters.base import AdapterExecutionResult, EnterpriseAdapter
 
 class MerchantAdapter(EnterpriseAdapter):
     adapter_name = "MerchantAdapter"
+    SUPPORTED_OPERATIONS = ("lookup_merchant", "update_merchant")
 
     def validate_request(self, request: dict) -> None:
         if "merchant_id" not in request.get("parameters", {}):

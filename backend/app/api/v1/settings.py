@@ -11,3 +11,8 @@ router = APIRouter(prefix="/settings", tags=["Settings"])
 @router.get("", response_model=SettingsRead)
 def read_settings(services: ServiceContainer = Depends(get_services)):
     return services.settings_service.read()
+
+
+@router.get("/lookups")
+def read_lookups(services: ServiceContainer = Depends(get_services)):
+    return services.settings_service.lookups()

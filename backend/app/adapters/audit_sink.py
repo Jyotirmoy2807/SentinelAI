@@ -4,6 +4,7 @@ from typing import Any
 
 from app.repositories.audit_repository import AuditRepository
 from app.utils.serialization import json_safe
+from app.utils.time import utc_now
 
 
 class AuditSink(ABC):
@@ -50,5 +51,5 @@ class SQLiteSplunkAuditSink(AuditSink):
             try:
                 return datetime.fromisoformat(value)
             except ValueError:
-                return datetime.utcnow()
-        return datetime.utcnow()
+                return utc_now()
+        return utc_now()

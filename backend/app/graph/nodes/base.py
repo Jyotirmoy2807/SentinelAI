@@ -1,14 +1,16 @@
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+import logging
 from time import perf_counter
 from typing import Any
 from uuid import uuid4
 
 from app.graph.state import GovernanceState
+from app.utils.time import utc_iso_ms
 
 
 NodeAction = Callable[[GovernanceState], Awaitable[dict[str, Any]]]
 StatusResolver = Callable[[GovernanceState], str]
+logger = logging.getLogger("sentinelai.workflow")
 
 
 async def run_governance_node(
@@ -20,6 +22,16 @@ async def run_governance_node(
 ) -> dict[str, Any]:
     started = perf_counter()
     existing_events = list(state.get("events", []))
+    metadata = state.get("metadata", {})
+    logger.info(
+        "governance node started",
+        extra={
+            "workflow_id": metadata.get("workflow_id"),
+            "correlation_id": metadata.get("trace_id"),
+            "request_id": metadata.get("request_id"),
+            "stage": node_name,
+        },
+    )
     start_event = _event(state, node_name, "RUNNING", 0, {})
     existing_events.append(start_event)
     await _emit(event_sink, start_event)
@@ -32,6 +44,15 @@ async def run_governance_node(
         completed_event = _event(merged_state, node_name, completed_status, duration_ms, _event_payload(node_name, merged_state))
         existing_events.append(completed_event)
         await _emit(event_sink, completed_event)
+        logger.info(
+            "governance node completed",
+            extra={
+                "workflow_id": merged_state.get("metadata", {}).get("workflow_id"),
+                "correlation_id": merged_state.get("metadata", {}).get("trace_id"),
+                "request_id": merged_state.get("metadata", {}).get("request_id"),
+                "stage": node_name,
+            },
+        )
         updates["events"] = existing_events
         return updates
     except Exception as exc:
@@ -39,6 +60,15 @@ async def run_governance_node(
         failed_event = _event(state, node_name, "FAILED", duration_ms, {"error": str(exc)})
         existing_events.append(failed_event)
         await _emit(event_sink, failed_event)
+        logger.exception(
+            "governance node failed",
+            extra={
+                "workflow_id": state.get("metadata", {}).get("workflow_id"),
+                "correlation_id": state.get("metadata", {}).get("trace_id"),
+                "request_id": state.get("metadata", {}).get("request_id"),
+                "stage": node_name,
+            },
+        )
         return {
             "fatal_error": True,
             "events": existing_events,
@@ -97,7 +127,7 @@ def _event(state: GovernanceState, node_name: str, status: str, duration_ms: flo
         "node": node_name,
         "stage": node_name,
         "status": status,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utc_iso_ms(),
         "duration_ms": duration_ms,
         "latency": duration_ms,
         "agent": identity.get("agent_name") or identity.get("passport_id") or normalized.get("passport_id", ""),

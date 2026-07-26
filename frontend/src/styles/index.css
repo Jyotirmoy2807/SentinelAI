@@ -15,6 +15,13 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #f7f9fc;
+  overflow-x: hidden;
+}
+
+html,
+#root {
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 button,
@@ -30,4 +37,10 @@ textarea {
 
 .scrollbar-thin {
   scrollbar-width: thin;
+}
+
+.json-panel {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
