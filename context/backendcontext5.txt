@@ -1,0 +1,741 @@
+# SentinelAI Backend Master Context
+
+## Part 5 — Implementation Conventions, Coding Standards, Scalability, Future Evolution & Non-Negotiable Rules
+
+---
+
+# Purpose
+
+This section defines **how the backend should be implemented**, regardless of the developer or AI agent writing the code.
+
+It is intentionally opinionated.
+
+Architectural consistency is valued over developer preference.
+
+If a future implementation conflicts with this document, this document takes precedence.
+
+---
+
+# Backend Development Philosophy
+
+SentinelAI is **not** a CRUD application.
+
+It is a **Governance Platform**.
+
+Every implementation decision should reinforce this idea.
+
+Before writing any code, always ask:
+
+> "Does this belong in Governance, or is it business logic?"
+
+If the answer is business logic, it probably belongs inside a Service.
+
+If it is workflow, it belongs in LangGraph.
+
+If it is persistence, it belongs in a Repository.
+
+---
+
+# The Golden Rule
+
+There are only four types of backend components.
+
+```text
+Controller
+
+↓
+
+Graph Node
+
+↓
+
+Service
+
+↓
+
+Repository
+```
+
+Nothing should violate this order.
+
+Controllers never call repositories.
+
+Nodes never call repositories.
+
+Repositories never call services.
+
+Services never call controllers.
+
+---
+
+# Graph First Thinking
+
+Whenever implementing a feature, think in graph terms.
+
+Never think:
+
+"I need another API."
+
+Instead think:
+
+"Where in the Governance Graph should this decision happen?"
+
+Most governance features belong to an existing node.
+
+Do not create unnecessary nodes.
+
+---
+
+# When To Add A New Graph Node
+
+A new node should only be created if it introduces a completely new governance capability.
+
+Examples
+
+Good
+
+Identity
+
+Policy
+
+Firewall
+
+Risk
+
+Compliance
+
+Budget
+
+Approval
+
+Bad
+
+Merchant Validation
+
+Refund Validation
+
+Invoice Validation
+
+These are business operations.
+
+They belong inside services.
+
+Not graph nodes.
+
+---
+
+# Backend Should Be Domain Driven
+
+The backend should be organized around domains.
+
+Examples
+
+Agent Domain
+
+Policy Domain
+
+Audit Domain
+
+Execution Domain
+
+Approval Domain
+
+Not around pages.
+
+Not around endpoints.
+
+---
+
+# Configuration Driven Platform
+
+Wherever possible the platform should prefer configuration over code.
+
+Examples
+
+Policies
+
+Firewall Rules
+
+Compliance Rules
+
+Budget Limits
+
+Enterprise APIs
+
+Approval Rules
+
+Departments
+
+Risk Thresholds
+
+These should all be configurable.
+
+Avoid hardcoded logic.
+
+---
+
+# Dependency Injection
+
+Every service should receive dependencies through constructor injection.
+
+Never instantiate dependencies inside services.
+
+Bad
+
+```text
+service = PolicyService()
+
+repo = PolicyRepository()
+```
+
+Good
+
+```text
+PolicyService(repository)
+```
+
+This makes testing significantly easier.
+
+---
+
+# Interface Driven Design
+
+Major components should depend upon abstractions.
+
+Examples
+
+ExecutionService
+
+↓
+
+EnterpriseAdapter Interface
+
+↓
+
+Concrete Adapter
+
+Never depend directly on implementations.
+
+---
+
+# Naming Conventions
+
+Classes
+
+PascalCase
+
+Examples
+
+AgentService
+
+PolicyService
+
+RiskEngine
+
+Methods
+
+camel_case
+
+Examples
+
+load_agent()
+
+calculate_risk()
+
+create_request()
+
+Variables
+
+snake_case
+
+Examples
+
+risk_score
+
+approval_status
+
+policy_result
+
+Constants
+
+UPPER_SNAKE_CASE
+
+Examples
+
+MAX_RISK
+
+DEFAULT_TIMEOUT
+
+ALLOW
+
+DENY
+
+---
+
+# API Naming Standards
+
+Use nouns.
+
+Examples
+
+/agents
+
+/policies
+
+/audit
+
+/enterprise
+
+Avoid verbs.
+
+Bad
+
+/createAgent
+
+/getPolicies
+
+/deletePolicy
+
+Prefer REST semantics.
+
+---
+
+# DTO Philosophy
+
+Never expose database entities directly.
+
+Instead
+
+Database Entity
+
+↓
+
+DTO
+
+↓
+
+Response
+
+Entities belong to persistence.
+
+DTOs belong to APIs.
+
+---
+
+# Validation Strategy
+
+Validation should happen as early as possible.
+
+Order
+
+FastAPI
+
+↓
+
+Pydantic Schema
+
+↓
+
+Graph
+
+↓
+
+Business Rules
+
+Never let invalid data enter the graph.
+
+---
+
+# Exception Handling
+
+Never throw raw exceptions to clients.
+
+Instead
+
+Internal Exception
+
+↓
+
+Standard Error
+
+↓
+
+Governance Response
+
+The requesting agent should always receive a predictable structure.
+
+---
+
+# Caching Strategy
+
+Only cache read-heavy configuration.
+
+Examples
+
+Policies
+
+Firewall Rules
+
+Compliance Rules
+
+Departments
+
+Enterprise Registry
+
+Do not cache transactional data.
+
+Examples
+
+Approvals
+
+Execution Results
+
+Audit Records
+
+Governance Requests
+
+---
+
+# Idempotency
+
+Governance execution should support idempotency.
+
+If an agent retries the same request with the same idempotency key,
+
+the backend should avoid duplicate enterprise execution.
+
+Execution should happen exactly once whenever possible.
+
+---
+
+# Long Running Requests
+
+Some requests require approval.
+
+The workflow should pause.
+
+Not timeout.
+
+When approval arrives,
+
+the graph resumes from the Human Approval node.
+
+Never restart the workflow.
+
+---
+
+# Asynchronous Operations
+
+Suitable candidates
+
+Audit Logging
+
+Dashboard Aggregation
+
+Notifications
+
+Metrics
+
+Report Generation
+
+These should not block governance execution.
+
+---
+
+# Observability
+
+Every request should be traceable.
+
+Each request receives
+
+Request ID
+
+Trace ID
+
+Workflow ID
+
+These identifiers travel through every layer.
+
+Controller
+
+↓
+
+Graph
+
+↓
+
+Services
+
+↓
+
+Repositories
+
+↓
+
+Adapters
+
+↓
+
+Logs
+
+↓
+
+Audit
+
+This makes debugging straightforward.
+
+---
+
+# Metrics
+
+The backend should expose operational metrics.
+
+Examples
+
+Average Governance Time
+
+Average Risk Calculation Time
+
+Approval Waiting Time
+
+Execution Latency
+
+Denied Requests
+
+Allowed Requests
+
+Approval Rate
+
+Adapter Failures
+
+These metrics power the Dashboard.
+
+---
+
+# Scalability
+
+The architecture should scale horizontally.
+
+Principles
+
+Stateless Services
+
+External Database
+
+External Cache
+
+Independent Adapters
+
+Independent Workers
+
+No server-local state.
+
+---
+
+# Future Distributed Execution
+
+The graph should be designed so future versions can execute across multiple workers.
+
+Possible future
+
+Identity Worker
+
+↓
+
+Risk Worker
+
+↓
+
+Approval Worker
+
+↓
+
+Execution Worker
+
+This should require minimal architectural changes.
+
+---
+
+# AI Assisted Governance
+
+Future versions may introduce LLM-powered governance.
+
+Examples
+
+Policy Recommendation
+
+Risk Explanation
+
+Compliance Suggestions
+
+Policy Generation
+
+These should be additional services.
+
+Never replace deterministic governance.
+
+LLMs assist.
+
+They do not decide.
+
+---
+
+# Simulation Mode
+
+The backend should support policy simulation.
+
+Simulation allows administrators to replay historical governance requests against new policies.
+
+Simulation must never call enterprise APIs.
+
+Execution Node should be replaced by a simulated execution during replay.
+
+---
+
+# Version Compatibility
+
+Future versions of SentinelAI should support multiple graph versions simultaneously.
+
+Example
+
+Graph v1
+
+Graph v2
+
+Existing requests should complete using the graph version with which they started.
+
+---
+
+# Multi-Tenancy
+
+Future architecture should support multiple organizations.
+
+Tenant isolation should exist at
+
+Agents
+
+Policies
+
+Budgets
+
+Compliance
+
+Audit
+
+Enterprise Registry
+
+No tenant should access another tenant's governance data.
+
+---
+
+# Security Audit
+
+Every privileged action should itself be audited.
+
+Examples
+
+Policy Updated
+
+Firewall Changed
+
+Budget Changed
+
+Enterprise API Registered
+
+Approval Granted
+
+Agent Blocked
+
+Administrators should never perform invisible actions.
+
+---
+
+# Code Review Checklist
+
+Every pull request should answer the following:
+
+Does this violate the layered architecture?
+
+Does this introduce business logic into controllers?
+
+Does this introduce business logic into graph nodes?
+
+Does this bypass services?
+
+Does this bypass repositories?
+
+Does this call enterprise APIs outside ExecutionService?
+
+Does this reduce explainability?
+
+Does this weaken auditability?
+
+If any answer is yes,
+
+the implementation should be reconsidered.
+
+---
+
+# Non-Negotiable Architectural Rules
+
+The following rules are absolute.
+
+1. Every enterprise request must enter through the Governance API.
+
+2. Every request must execute inside the Governance Graph.
+
+3. Graph nodes must remain thin.
+
+4. Services own business logic.
+
+5. Repositories own persistence.
+
+6. Adapters own enterprise integrations.
+
+7. Enterprise APIs must never be called directly.
+
+8. Explainability must exist for every decision.
+
+9. Audit must exist for every request.
+
+10. Human Approval must resume existing workflows.
+
+11. Policies must be configuration-driven.
+
+12. Firewall rules must be configuration-driven.
+
+13. Budget rules must be configuration-driven.
+
+14. Compliance rules must be configuration-driven.
+
+15. The architecture should prioritize governance over convenience.
+
+16. Every new feature should fit within the existing architecture instead of creating parallel architectures.
+
+17. The Governance Graph is the orchestration engine and should remain the central execution model.
+
+18. SentinelAI exists to govern autonomous AI agents, not to replace enterprise systems.
+
+19. The Enterprise Execution Node is the only component permitted to invoke enterprise APIs.
+
+20. Every implementation decision should preserve simplicity, determinism, auditability, explainability, and maintainability.
+
+---
+
+# Final Architectural Principle
+
+SentinelAI is fundamentally an **Enterprise AI Governance Platform**.
+
+Every backend component exists to answer one question:
+
+> **"Should this autonomous AI agent be allowed to perform this enterprise action?"**
+
+If the answer is yes, the Enterprise Execution Node performs the action.
+
+If the answer is no, SentinelAI explains why, records the decision, and prevents execution.
+
+Everything else in the backend exists to support that single objective.
+
+---
+
+**End of SentinelAI Backend Master Context**

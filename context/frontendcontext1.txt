@@ -1,0 +1,875 @@
+# SentinelAI Frontend Master Context
+
+## Part 1 — Frontend Philosophy, Architecture, UI Principles & Application Structure
+
+---
+
+# Purpose
+
+This document defines the complete frontend architecture of SentinelAI.
+
+It serves as the master implementation guide for frontend developers and AI coding agents.
+
+The frontend is **not** just an interface.
+
+It is the visualization layer of the Governance Platform.
+
+Its responsibility is to make enterprise AI governance understandable, controllable and explainable.
+
+---
+
+# Frontend Vision
+
+The frontend should answer four questions for an enterprise administrator.
+
+1. Which AI Agents exist?
+
+2. What are they allowed to do?
+
+3. What are they doing right now?
+
+4. Why was a decision made?
+
+Everything in the UI should support answering one or more of these questions.
+
+---
+
+# Frontend Philosophy
+
+SentinelAI is an Enterprise Governance Console.
+
+It is **not** an ERP.
+
+It is **not** a CRM.
+
+It is **not** an Admin Dashboard template.
+
+It is a Governance Platform.
+
+Every page should reinforce that identity.
+
+---
+
+# Core Design Principles
+
+The UI should feel like
+
+Enterprise
+
+Professional
+
+Minimal
+
+Fast
+
+Explainable
+
+Predictable
+
+Modern
+
+Avoid unnecessary animations.
+
+Use motion only to explain execution.
+
+---
+
+# User Personas
+
+The frontend primarily serves administrators.
+
+Primary users include
+
+Enterprise Administrator
+
+Security Administrator
+
+Compliance Officer
+
+Platform Administrator
+
+Operations Engineer
+
+AI Governance Team
+
+Developers are secondary users.
+
+AI Agents never interact with this UI.
+
+---
+
+# High-Level Frontend Architecture
+
+```text
+Browser
+
+↓
+
+React Application
+
+↓
+
+Feature Modules
+
+↓
+
+Reusable Components
+
+↓
+
+API Layer
+
+↓
+
+FastAPI Backend
+
+↓
+
+Governance Graph
+```
+
+The frontend never communicates directly with LangGraph.
+
+Everything goes through FastAPI.
+
+---
+
+# Technology Stack
+
+Recommended stack
+
+React
+
+TypeScript
+
+React Router
+
+React Query (TanStack Query)
+
+TailwindCSS
+
+React Flow
+
+Zustand
+
+Axios
+
+Framer Motion (minimal usage)
+
+React Hook Form
+
+Zod
+
+Heroicons or Lucide Icons
+
+---
+
+# Why React?
+
+React provides
+
+Component architecture
+
+Reusable UI
+
+Large ecosystem
+
+Excellent TypeScript support
+
+React Flow integration
+
+State management flexibility
+
+---
+
+# Why TypeScript?
+
+The Governance Platform contains numerous business objects.
+
+Examples
+
+Agent
+
+Policy
+
+Approval
+
+Governance Request
+
+Enterprise API
+
+Risk
+
+Compliance
+
+Type safety significantly reduces frontend defects.
+
+TypeScript is mandatory.
+
+---
+
+# Application Structure
+
+The frontend should be feature-oriented.
+
+Never organize by file type alone.
+
+Recommended structure
+
+```text
+src/
+
+app/
+
+modules/
+
+components/
+
+layouts/
+
+pages/
+
+hooks/
+
+services/
+
+store/
+
+types/
+
+utils/
+
+assets/
+
+styles/
+```
+
+Every directory owns one responsibility.
+
+---
+
+# Feature Modules
+
+Each major navigation item is a feature module.
+
+Modules should be independent.
+
+Example
+
+```text
+modules/
+
+dashboard/
+
+agents/
+
+governance/
+
+enterprise/
+
+execution/
+
+approvals/
+
+audit/
+
+settings/
+```
+
+Each module contains its own
+
+Components
+
+Hooks
+
+Services
+
+Types
+
+Pages
+
+---
+
+# Application Shell
+
+The application consists of
+
+Sidebar
+
+↓
+
+Top Navigation
+
+↓
+
+Content Area
+
+↓
+
+Global Notifications
+
+↓
+
+Modal Layer
+
+Everything renders inside the content area.
+
+---
+
+# Layout Structure
+
+```text
+Application
+
+↓
+
+Main Layout
+
+↓
+
+Sidebar
+
+Topbar
+
+Content
+
+Footer (optional)
+```
+
+The layout should never contain business logic.
+
+---
+
+# Navigation Philosophy
+
+Navigation should mirror backend domains.
+
+Never mirror backend endpoints.
+
+Good
+
+Agents
+
+Policies
+
+Approvals
+
+Audit
+
+Dashboard
+
+Bad
+
+Services
+
+Repositories
+
+ExecutionService
+
+Nodes
+
+Users should navigate by business concepts.
+
+---
+
+# Sidebar Structure
+
+The permanent sidebar should contain
+
+Dashboard
+
+Agent Management
+
+Governance Management
+
+Enterprise API Registry
+
+Live Governance
+
+Human Approval
+
+Audit & Explainability
+
+Settings
+
+Simulation Lab
+
+This order should remain consistent.
+
+---
+
+# Top Navigation
+
+The top navigation contains
+
+Search
+
+Notifications
+
+Environment
+
+User Profile
+
+Theme Toggle (optional)
+
+Global Actions
+
+No business-specific navigation belongs here.
+
+---
+
+# Page Structure
+
+Every page should follow a consistent layout.
+
+```text
+Title
+
+↓
+
+Description
+
+↓
+
+Toolbar
+
+↓
+
+Primary Content
+
+↓
+
+Supporting Panels
+```
+
+This creates predictable navigation.
+
+---
+
+# UI Philosophy
+
+Every page should answer
+
+What am I looking at?
+
+What actions are available?
+
+What is the current status?
+
+Avoid decorative content.
+
+---
+
+# Color Philosophy
+
+Colors communicate governance state.
+
+Green
+
+Allowed
+
+Blue
+
+Information
+
+Orange
+
+Approval Required
+
+Yellow
+
+Warning
+
+Red
+
+Denied
+
+Gray
+
+Inactive
+
+Never use colors inconsistently.
+
+---
+
+# Status Badges
+
+Every entity should expose status visually.
+
+Examples
+
+Agent
+
+Active
+
+Blocked
+
+Suspended
+
+Governance Request
+
+Running
+
+Approved
+
+Denied
+
+Pending
+
+Enterprise API
+
+Enabled
+
+Disabled
+
+Maintenance
+
+Status badges should appear consistently across the application.
+
+---
+
+# Cards
+
+Cards represent summarized information.
+
+Examples
+
+Active Agents
+
+Pending Approvals
+
+Denied Requests
+
+Enterprise APIs
+
+Risk Overview
+
+Cards should never contain complex workflows.
+
+---
+
+# Tables
+
+Large datasets should use tables.
+
+Examples
+
+Agents
+
+Policies
+
+Enterprise APIs
+
+Audit Logs
+
+Approvals
+
+Every table should support
+
+Sorting
+
+Filtering
+
+Searching
+
+Pagination
+
+Column visibility
+
+Future export support
+
+---
+
+# Forms
+
+Forms should be predictable.
+
+Recommended order
+
+General Information
+
+↓
+
+Configuration
+
+↓
+
+Permissions
+
+↓
+
+Advanced Settings
+
+↓
+
+Save
+
+Validation should happen in real time whenever possible.
+
+---
+
+# Modals
+
+Use modals only for
+
+Confirmation
+
+Quick Edit
+
+Delete
+
+Approval
+
+Small forms
+
+Large workflows deserve dedicated pages.
+
+---
+
+# Drawers
+
+Drawers are preferred for viewing details.
+
+Examples
+
+Agent Details
+
+Policy Details
+
+Audit Details
+
+Execution Details
+
+This allows users to retain page context.
+
+---
+
+# Notifications
+
+Notifications communicate
+
+Success
+
+Failure
+
+Warning
+
+Information
+
+They should never explain governance.
+
+Governance reasoning belongs in Explainability.
+
+---
+
+# Loading States
+
+Never leave blank pages.
+
+Every request should have
+
+Skeletons
+
+Loading indicators
+
+Progress states
+
+This improves perceived performance.
+
+---
+
+# Empty States
+
+Every module should have meaningful empty states.
+
+Example
+
+"No Agents Registered"
+
+↓
+
+Button
+
+Register Agent
+
+Never display empty tables without guidance.
+
+---
+
+# Error States
+
+Every page should handle
+
+Network Failure
+
+Permission Denied
+
+Unexpected Error
+
+Retry
+
+Errors should explain next steps.
+
+---
+
+# Frontend State Management
+
+State is divided into three categories.
+
+Server State
+
+Managed using React Query.
+
+Examples
+
+Agents
+
+Policies
+
+Audit
+
+Approvals
+
+Enterprise APIs
+
+---
+
+UI State
+
+Managed using Zustand.
+
+Examples
+
+Sidebar
+
+Theme
+
+Selected Agent
+
+Filters
+
+Current Tab
+
+Open Drawers
+
+---
+
+Local State
+
+Managed using React hooks.
+
+Examples
+
+Input Fields
+
+Form Values
+
+Modal Visibility
+
+Temporary Selection
+
+Never place local component state inside the global store.
+
+---
+
+# API Layer
+
+All backend communication should pass through a centralized API layer.
+
+```text
+React Component
+
+↓
+
+Feature Hook
+
+↓
+
+API Service
+
+↓
+
+Axios Client
+
+↓
+
+FastAPI
+```
+
+Components should never make HTTP requests directly.
+
+---
+
+# API Services
+
+Example
+
+```text
+AgentAPI
+
+PolicyAPI
+
+DashboardAPI
+
+ApprovalAPI
+
+AuditAPI
+
+ExecutionAPI
+```
+
+Each service wraps backend endpoints.
+
+---
+
+# Authentication
+
+Administrative users authenticate with the platform.
+
+AI Agents do not use the frontend.
+
+Frontend authentication is completely separate from Agent Passports.
+
+---
+
+# Responsive Design
+
+Primary target
+
+Desktop
+
+Secondary
+
+Large Tablets
+
+Mobile support is optional.
+
+SentinelAI is an enterprise console.
+
+Desktop-first design is preferred.
+
+---
+
+# Frontend Design Goals
+
+The interface should always feel
+
+Fast
+
+Professional
+
+Stable
+
+Predictable
+
+Transparent
+
+Explainable
+
+Governance should never feel like a black box.
+
+The UI exists to make every governance decision understandable to enterprise administrators.
+
+---
+
+**End of Frontend Master Context — Part 1**
