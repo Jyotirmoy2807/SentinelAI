@@ -22,11 +22,12 @@ export function AuditDetails({ detail }) {
             {detail.audit_logs?.map((log) => (
               <div key={log.id} className="rounded-md border border-line p-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-ink">{log.event_type.replaceAll("_", " ")}</div>
+                  <div className="text-sm font-semibold text-ink">{log.stage.replaceAll("_", " ")}</div>
                   <StatusBadge status={log.decision} />
                 </div>
-                <div className="mt-1 text-xs text-slate-500">{formatDate(log.created_at)} at {log.node}</div>
-                <p className="mt-2 text-sm text-slate-600">{log.message}</p>
+                <div className="mt-1 text-xs text-slate-500">{formatDate(log.timestamp)} | {log.agent} | {log.enterprise_api}</div>
+                <p className="mt-2 text-sm text-slate-600">{log.reason}</p>
+                <div className="mt-2 text-xs text-slate-500">Policy: {log.policy || "n/a"} | Risk: {log.risk_score}</div>
               </div>
             ))}
           </div>

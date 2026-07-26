@@ -2,6 +2,7 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime
 from time import perf_counter
 from typing import Any
+from uuid import uuid4
 
 from app.graph.state import GovernanceState
 
@@ -82,12 +83,31 @@ def status_from_decision(section: str) -> StatusResolver:
 
 def _event(state: GovernanceState, node_name: str, status: str, duration_ms: float, payload: dict[str, Any]) -> dict[str, Any]:
     request_id = state.get("metadata", {}).get("request_id", "UNASSIGNED")
+    normalized = state.get("normalized_execution", {})
+    identity = state.get("identity", {})
+    policy = state.get("policy", {})
+    risk = state.get("risk", {})
+    approval = state.get("approval", {})
+    decision = payload.get("decision") or policy.get("decision") or identity.get("decision") or status
+    reason = _reason_from_payload(payload)
     return {
+        "eventId": f"EVT-{uuid4().hex[:12].upper()}",
         "request_id": request_id,
+        "requestId": request_id,
         "node": node_name,
+        "stage": node_name,
         "status": status,
         "timestamp": datetime.utcnow().isoformat(),
         "duration_ms": duration_ms,
+        "latency": duration_ms,
+        "agent": identity.get("agent_name") or identity.get("passport_id") or normalized.get("passport_id", ""),
+        "action": normalized.get("operation", ""),
+        "policy": policy.get("matched_policy", ""),
+        "riskScore": risk.get("score", 0),
+        "decision": decision,
+        "approvalStatus": approval.get("status", "NOT_REQUIRED"),
+        "reason": reason,
+        "enterpriseAPI": normalized.get("service", ""),
         "payload": payload,
     }
 
@@ -98,10 +118,7 @@ def _event_payload(node_name: str, state: GovernanceState) -> dict[str, Any]:
         "request_normalization": "normalized_execution",
         "agent_identity": "identity",
         "policy_engine": "policy",
-        "ai_firewall": "firewall",
         "risk_engine": "risk",
-        "budget_engine": "budget",
-        "compliance_engine": "compliance",
         "human_approval": "approval",
         "audit_engine": "audit",
         "enterprise_execution": "execution",
@@ -109,6 +126,19 @@ def _event_payload(node_name: str, state: GovernanceState) -> dict[str, Any]:
         "response_builder": "response",
     }.get(node_name)
     return state.get(section, {}) if section else {}
+
+
+def _reason_from_payload(payload: dict[str, Any]) -> str:
+    if payload.get("reason"):
+        return str(payload["reason"])
+    reasons = payload.get("reasons")
+    if isinstance(reasons, list) and reasons:
+        return str(reasons[0])
+    if payload.get("explanation"):
+        return str(payload["explanation"])
+    if payload.get("status"):
+        return str(payload["status"])
+    return ""
 
 
 async def _emit(event_sink: Callable[[dict[str, Any]], Awaitable[None]] | None, event: dict[str, Any]) -> None:

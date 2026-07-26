@@ -8,12 +8,19 @@ from app.schemas.common import ORMModel
 
 class AuditLogRead(ORMModel):
     id: int
-    audit_id: str
+    event_id: str
     request_id: str
-    event_type: str
-    node: str
+    timestamp: datetime
+    agent: str
+    action: str
+    policy: str
+    risk_score: float
     decision: str
-    message: str
+    approval_status: str
+    latency_ms: float
+    reason: str
+    enterprise_api: str
+    stage: str
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime
 

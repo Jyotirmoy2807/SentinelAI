@@ -94,8 +94,10 @@ class ApprovalService:
 
     def _approval_reason(self, state: dict) -> str:
         reasons = []
-        for section in ("policy", "budget", "compliance"):
+        for section in ("policy", "risk"):
             reasons.extend(state.get(section, {}).get("reasons", []))
+            if state.get(section, {}).get("explanation"):
+                reasons.append(state[section]["explanation"])
         risk = state.get("risk", {})
         if risk.get("category") == "HIGH":
             reasons.append("High risk score requires human approval.")

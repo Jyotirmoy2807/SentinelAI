@@ -53,9 +53,9 @@ def samples() -> list[dict]:
             },
         },
         {
-            "id": "firewall_denial",
-            "name": "Firewall denial",
-            "description": "Blocked agent attempts a destructive operation that should never reach execution.",
+            "id": "opa_denial",
+            "name": "OPA policy denial",
+            "description": "Blocked agent attempts a destructive operation that OPA policy denies before execution.",
             "request": {
                 "metadata": {"passportId": "AGENT-IT-005", "agentVersion": "0.9.0"},
                 "execution": {

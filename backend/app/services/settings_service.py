@@ -16,4 +16,8 @@ class SettingsService:
             "database_url": self.settings.database_url,
             "cors_origins": self.settings.cors_origins,
             "available_adapters": self.adapter_factory.list_adapters(),
+            "opa_url": self.settings.opa_url,
+            "opa_decision_path": self.settings.opa_decision_path,
+            "opa_policy_bundle_path": self.settings.opa_policy_bundle_path,
+            "audit_sink": self.settings.audit_sink,
         }

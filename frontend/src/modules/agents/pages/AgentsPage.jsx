@@ -63,7 +63,7 @@ export function AgentsPage() {
     <div>
       <PageHeader
         title="Agent Management"
-        description="Managed Agent Passports, permissions, budgets, trust scores, and execution posture for autonomous AI agents."
+        description="Managed Agent Passports, permissions, OPA policy profiles, trust scores, and execution posture for autonomous AI agents."
         action={
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />

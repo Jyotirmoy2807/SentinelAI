@@ -6,21 +6,20 @@ from app.repositories.approval_repository import ApprovalRepository
 from app.repositories.audit_repository import AuditRepository
 from app.repositories.enterprise_api_repository import EnterpriseAPIRepository
 from app.repositories.governance_request_repository import GovernanceRequestRepository
-from app.repositories.policy_repository import PolicyRepository
 
 
 class DashboardService:
     def __init__(
         self,
         agent_repository: AgentRepository,
-        policy_repository: PolicyRepository,
+        policy_catalog,
         enterprise_repository: EnterpriseAPIRepository,
         approval_repository: ApprovalRepository,
         request_repository: GovernanceRequestRepository,
         audit_repository: AuditRepository,
     ):
         self.agent_repository = agent_repository
-        self.policy_repository = policy_repository
+        self.policy_catalog = policy_catalog
         self.enterprise_repository = enterprise_repository
         self.approval_repository = approval_repository
         self.request_repository = request_repository
@@ -28,7 +27,6 @@ class DashboardService:
 
     def summary(self) -> dict:
         agents = self.agent_repository.list()
-        policies = self.policy_repository.list()
         enterprise_apis = self.enterprise_repository.list()
         requests = self.request_repository.list_recent(200)
         approvals = self.approval_repository.list_recent(200)
@@ -44,7 +42,7 @@ class DashboardService:
                 {"label": "Active Agents", "value": len([item for item in agents if item.status == "ACTIVE"]), "tone": "success"},
                 {"label": "Blocked Agents", "value": len([item for item in agents if item.status == "BLOCKED"]), "tone": "danger"},
                 {"label": "Enterprise APIs", "value": len(enterprise_apis), "tone": "info"},
-                {"label": "Active Policies", "value": len([item for item in policies if item.status == "ACTIVE"]), "tone": "success"},
+                {"label": "OPA Policies", "value": self.policy_catalog.count_active(), "tone": "success"},
                 {"label": "Pending Approvals", "value": len([item for item in approvals if item.status == "PENDING"]), "tone": "warning"},
                 {"label": "Requests Today", "value": len(requests_today), "tone": "info"},
                 {"label": "Denied Requests", "value": len(denied), "tone": "danger"},
@@ -56,9 +54,9 @@ class DashboardService:
             "approval_trend": self._approval_trend(approvals),
             "recent_activity": [
                 {
-                    "timestamp": item.created_at.isoformat(),
-                    "title": item.event_type.replace("_", " ").title(),
-                    "description": item.message,
+                    "timestamp": item.timestamp.isoformat(),
+                    "title": item.stage.replace("_", " ").title(),
+                    "description": item.reason,
                     "status": item.decision or "INFO",
                 }
                 for item in audit_logs

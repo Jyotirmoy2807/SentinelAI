@@ -64,13 +64,14 @@ export function ExecutionWorkbench({ simulation = false }) {
       {execution.error ? <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-danger">{execution.error}</div> : null}
       <div className="grid gap-5">
         <Card>
-          <CardHeader title="Governance Execution Graph">
+          <CardHeader title="Governance Flow">
             {selectedSample?.description}
           </CardHeader>
           <CardBody>
             <GovernanceGraphView statuses={execution.nodeStatuses} />
           </CardBody>
         </Card>
+        <GovernanceSummary response={execution.finalResponse} />
         <div className="grid gap-5 xl:grid-cols-[0.72fr_0.28fr]">
           <Card>
             <CardHeader title="Governance State" action={execution.finalResponse ? <StatusBadge status={execution.finalResponse.governance?.decision} /> : null} />
@@ -94,7 +95,7 @@ export function ExecutionWorkbench({ simulation = false }) {
               </CardBody>
             </Card>
             <Card>
-              <CardHeader title="Explainability" />
+              <CardHeader title="Audit Timeline" />
               <CardBody>
                 <div className="text-sm leading-6 text-slate-600">
                   {execution.finalResponse?.explainability?.narrative || "Explainability appears after the graph reaches the explanation node."}
@@ -139,6 +140,31 @@ export function ExecutionWorkbench({ simulation = false }) {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function GovernanceSummary({ response }) {
+  const risk = response?.governance?.risk || {};
+  const opa = response?.governance?.opa || {};
+  const timeline = response?.explainability?.timeline || [];
+  const cards = [
+    { title: "Risk Summary", value: risk.level || risk.category || "Pending", detail: risk.score !== undefined ? `Score ${risk.score}` : "NIST RMF assessment pending" },
+    { title: "OPA Decision", value: opa.decision || "Pending", detail: opa.opa_url || "OPA evaluation pending" },
+    { title: "Matched Policy", value: opa.matched_policy || "Pending", detail: opa.reasons?.[0] || "No policy result yet" },
+    { title: "Audit Timeline", value: timeline.length || 0, detail: "Splunk-compatible events" }
+  ];
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card) => (
+        <Card key={card.title}>
+          <CardBody>
+            <div className="text-sm font-medium text-slate-500">{card.title}</div>
+            <div className="mt-3 text-xl font-semibold text-ink">{card.value}</div>
+            <div className="mt-2 text-xs leading-5 text-slate-500">{card.detail}</div>
+          </CardBody>
+        </Card>
+      ))}
     </div>
   );
 }

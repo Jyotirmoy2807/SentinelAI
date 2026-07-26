@@ -13,6 +13,7 @@ class ResponseBuilderService:
             "governance": {
                 "decision": decision,
                 "risk": risk,
+                "opa": state.get("policy", {}),
                 "reasons": self._collect_reasons(state),
                 "approval_status": approval.get("status", "NOT_REQUIRED"),
                 "status": audit.get("status"),
@@ -24,7 +25,7 @@ class ResponseBuilderService:
 
     def _collect_reasons(self, state: dict) -> list[str]:
         reasons = []
-        for section in ("identity", "policy", "firewall", "risk", "budget", "compliance", "approval"):
+        for section in ("identity", "risk", "policy", "approval", "execution"):
             payload = state.get(section, {})
             if payload.get("reason"):
                 reasons.append(payload["reason"])
@@ -44,10 +45,7 @@ class ResponseBuilderService:
                 "identity",
                 "normalized_execution",
                 "policy",
-                "firewall",
                 "risk",
-                "budget",
-                "compliance",
                 "approval",
                 "audit",
                 "execution",

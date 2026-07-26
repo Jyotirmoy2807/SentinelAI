@@ -2,9 +2,7 @@ import { apiClient } from "../../../services/apiClient.js";
 
 const endpoints = {
   policies: "/policies",
-  firewall: "/firewall",
-  compliance: "/compliance",
-  budget: "/budget"
+  settings: "/settings"
 };
 
 export const governanceService = {
@@ -12,16 +10,8 @@ export const governanceService = {
     const { data } = await apiClient.get(endpoints[kind]);
     return data;
   },
-  async create(kind, payload) {
-    const { data } = await apiClient.post(endpoints[kind], payload);
+  async settings() {
+    const { data } = await apiClient.get(endpoints.settings);
     return data;
   },
-  async update(kind, id, payload) {
-    const { data } = await apiClient.put(`${endpoints[kind]}/${id}`, payload);
-    return data;
-  },
-  async remove(kind, id) {
-    const { data } = await apiClient.delete(`${endpoints[kind]}/${id}`);
-    return data;
-  }
 };

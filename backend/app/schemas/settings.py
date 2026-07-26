@@ -9,3 +9,7 @@ class SettingsRead(BaseModel):
     database_url: str
     cors_origins: list[str]
     available_adapters: list[str]
+    opa_url: str
+    opa_decision_path: str
+    opa_policy_bundle_path: str
+    audit_sink: str

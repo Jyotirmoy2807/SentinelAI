@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import uuid4
 
+from app.adapters.audit_sink import AuditSink
 from app.repositories.audit_repository import AuditRepository
-from app.repositories.governance_decision_repository import GovernanceDecisionRepository
 from app.repositories.governance_request_repository import GovernanceRequestRepository
 from app.utils.serialization import json_safe
 
@@ -12,11 +12,11 @@ class AuditService:
         self,
         audit_repository: AuditRepository,
         request_repository: GovernanceRequestRepository,
-        decision_repository: GovernanceDecisionRepository,
+        sink: AuditSink,
     ):
         self.audit_repository = audit_repository
         self.request_repository = request_repository
-        self.decision_repository = decision_repository
+        self.sink = sink
 
     def record(self, state: dict) -> dict:
         metadata = state.get("metadata", {})
@@ -37,53 +37,25 @@ class AuditService:
             "risk_score": risk_score,
             "duration_ms": float(metadata.get("execution_duration_ms") or 0),
             "state_snapshot": json_safe(state),
-            "completed_at": datetime.utcnow() if decision != "REQUIRE_APPROVAL" else None,
+            "completed_at": None if decision == "REQUIRE_APPROVAL" else datetime.utcnow(),
         }
         if existing_request:
             self.request_repository.update(existing_request, request_data)
         else:
             self.request_repository.create(request_data)
 
-        audit_id = f"AUD-{uuid4().hex[:10].upper()}"
-        self.audit_repository.create(
-            {
-                "audit_id": audit_id,
-                "request_id": request_id,
-                "event_type": "GOVERNANCE_DECISION",
-                "node": "audit_engine",
-                "decision": decision,
-                "message": self._decision_message(decision, state),
-                "payload": json_safe(
-                    {
-                        "identity": state.get("identity"),
-                        "policy": state.get("policy"),
-                        "firewall": state.get("firewall"),
-                        "risk": state.get("risk"),
-                        "budget": state.get("budget"),
-                        "compliance": state.get("compliance"),
-                        "approval": state.get("approval"),
-                    }
-                ),
-            }
-        )
-        self.decision_repository.create(
-            {
-                "request_id": request_id,
-                "decision": decision,
-                "node": "audit_engine",
-                "reason": self._decision_message(decision, state),
-                "payload": json_safe(state),
-            }
-        )
-        self.audit_repository.db.commit()
+        events = self._splunk_events(state, decision)
+        for event in events:
+            self.sink.emit(event)
+        self.sink.flush()
         return {
-            "audit_id": audit_id,
+            "audit_id": f"AUD-{uuid4().hex[:10].upper()}",
             "decision": decision,
             "status": status,
-            "event_timeline": state.get("events", []),
+            "events": events,
+            "event_timeline": events,
             "decision_trail": self._decision_trail(state),
-            "node_history": [event.get("node") for event in state.get("events", []) if event.get("status") != "RUNNING"],
-            "timestamp": datetime.utcnow().isoformat(),
+            "node_history": [event.get("stage") for event in events],
         }
 
     def list_recent(self, limit: int = 200) -> list:
@@ -97,16 +69,17 @@ class AuditService:
         }
 
     def resolve_decision(self, state: dict) -> str:
-        for section in ("identity", "policy", "firewall", "budget"):
-            if state.get(section, {}).get("decision") == "DENY":
-                return "DENY"
-        if state.get("compliance", {}).get("decision") == "DENY":
+        if state.get("identity", {}).get("decision") == "DENY":
             return "DENY"
         approval_status = state.get("approval", {}).get("status")
         if approval_status == "PENDING":
             return "REQUIRE_APPROVAL"
         if approval_status == "REJECTED":
             return "DENY"
+        if state.get("policy", {}).get("decision") == "DENY":
+            return "DENY"
+        if state.get("policy", {}).get("decision") == "REQUIRE_APPROVAL" and approval_status != "APPROVED":
+            return "REQUIRE_APPROVAL"
         return "ALLOW"
 
     def _status_from_decision(self, decision: str, state: dict) -> str:
@@ -127,8 +100,41 @@ class AuditService:
 
     def _decision_trail(self, state: dict) -> list[dict]:
         trail = []
-        for section in ("identity", "policy", "firewall", "risk", "budget", "compliance", "approval"):
+        for section in ("identity", "risk", "policy", "approval", "execution"):
             payload = state.get(section)
             if payload:
                 trail.append({"section": section, "decision": payload.get("decision") or payload.get("status"), "payload": payload})
         return trail
+
+    def _splunk_events(self, state: dict, final_decision: str) -> list[dict]:
+        events = [event for event in state.get("events", []) if event.get("status") != "RUNNING"]
+        audit_event = self._build_audit_logged_event(state, final_decision)
+        return events + [audit_event]
+
+    def _build_audit_logged_event(self, state: dict, final_decision: str) -> dict:
+        metadata = state.get("metadata", {})
+        identity = state.get("identity", {})
+        normalized = state.get("normalized_execution", {})
+        policy = state.get("policy", {})
+        risk = state.get("risk", {})
+        approval = state.get("approval", {})
+        return {
+            "eventId": f"EVT-{uuid4().hex[:12].upper()}",
+            "timestamp": metadata.get("timestamp"),
+            "requestId": metadata.get("request_id", ""),
+            "request_id": metadata.get("request_id", ""),
+            "agent": identity.get("agent_name") or identity.get("passport_id") or normalized.get("passport_id", ""),
+            "action": normalized.get("operation", ""),
+            "policy": policy.get("matched_policy", ""),
+            "riskScore": risk.get("score", 0),
+            "decision": final_decision,
+            "approvalStatus": approval.get("status", "NOT_REQUIRED"),
+            "latency": 0,
+            "duration_ms": 0,
+            "reason": self._decision_message(final_decision, state),
+            "enterpriseAPI": normalized.get("service", ""),
+            "stage": "audit_splunk",
+            "node": "audit_splunk",
+            "status": "COMPLETED",
+            "payload": {"sink": "splunk-compatible-json"},
+        }

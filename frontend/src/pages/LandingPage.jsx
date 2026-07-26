@@ -6,14 +6,11 @@ import { StatusBadge } from "../components/badge/StatusBadge.jsx";
 
 const checkpoints = [
   "Identity",
-  "Policy",
-  "Firewall",
-  "Risk",
-  "Budget",
-  "Compliance",
+  "NIST RMF Risk",
+  "OPA Policy",
   "Approval",
-  "Audit",
   "Execution",
+  "Splunk Audit",
   "Explainability"
 ];
 

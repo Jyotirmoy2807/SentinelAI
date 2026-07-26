@@ -7,7 +7,7 @@ export function AgentDetails({ agent }) {
     return (
       <Card>
         <CardBody>
-          <div className="text-sm text-slate-500">Select an agent to inspect passport, permissions, budget, and activity.</div>
+          <div className="text-sm text-slate-500">Select an agent to inspect passport, permissions, OPA profile, and activity.</div>
         </CardBody>
       </Card>
     );
@@ -28,7 +28,7 @@ export function AgentDetails({ agent }) {
             <div className="text-xs font-semibold uppercase text-slate-400">Status</div>
             <StatusBadge status={agent.status} />
           </div>
-          <Info label="Budget" value={agent.budget_profile} />
+          <Info label="OPA Budget Profile" value={agent.budget_profile} />
           <Info label="Last Activity" value={formatDate(agent.last_activity)} />
         </div>
         <Section title="Allowed APIs" items={agent.allowed_apis} />

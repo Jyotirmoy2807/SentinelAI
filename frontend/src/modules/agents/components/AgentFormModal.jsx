@@ -76,7 +76,7 @@ export function AgentFormModal({ open, onClose, agent, onSubmit }) {
           ["owner", "Owner"],
           ["department", "Department"],
           ["version", "Version"],
-          ["budget_profile", "Budget Profile"]
+          ["budget_profile", "OPA Budget Profile"]
         ].map(([name, label]) => (
           <label key={name} className="text-sm font-medium text-slate-600">
             {label}

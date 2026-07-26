@@ -14,11 +14,13 @@ export function AuditPage() {
   const columns = useMemo(
     () => [
       { key: "request_id", header: "Request ID" },
-      { key: "node", header: "Node" },
-      { key: "event_type", header: "Event" },
+      { key: "stage", header: "Stage" },
+      { key: "agent", header: "Agent" },
+      { key: "action", header: "Action" },
+      { key: "policy", header: "Policy" },
+      { key: "risk_score", header: "Risk" },
       { key: "decision", header: "Decision", render: (row) => <StatusBadge status={row.decision} /> },
-      { key: "message", header: "Message" },
-      { key: "created_at", header: "Timestamp", render: (row) => formatDate(row.created_at) }
+      { key: "timestamp", header: "Timestamp", render: (row) => formatDate(row.timestamp) }
     ],
     []
   );
@@ -28,7 +30,7 @@ export function AuditPage() {
     <div>
       <PageHeader
         title="Audit & Explainability"
-        description="Immutable governance history, decision trail, request detail, execution evidence, and reasoning context."
+        description="Splunk-compatible governance events, decision trail, request detail, execution evidence, and reasoning context."
       />
       <div className="grid gap-5 xl:grid-cols-[1fr_460px]">
         <Card>

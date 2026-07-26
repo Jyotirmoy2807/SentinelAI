@@ -3,24 +3,17 @@ from langgraph.graph import END, StateGraph
 from app.graph.nodes.api_ingestion import build_api_ingestion_node
 from app.graph.nodes.approval import build_human_approval_node
 from app.graph.nodes.audit import build_audit_engine_node
-from app.graph.nodes.budget import build_budget_engine_node
-from app.graph.nodes.compliance import build_compliance_engine_node
 from app.graph.nodes.execution import build_enterprise_execution_node
 from app.graph.nodes.explainability import build_explainability_node
-from app.graph.nodes.firewall import build_ai_firewall_node
 from app.graph.nodes.identity import build_agent_identity_node
 from app.graph.nodes.normalization import build_request_normalization_node
 from app.graph.nodes.policy import build_policy_engine_node
 from app.graph.nodes.response_builder import build_response_builder_node
 from app.graph.nodes.risk import build_risk_engine_node
 from app.graph.routing import (
-    route_after_budget,
-    route_after_compliance,
-    route_after_firewall,
     route_after_identity,
     route_after_policy,
-    route_after_risk,
-    route_after_audit,
+    route_after_human_approval,
 )
 from app.graph.state import EventSink, GovernanceState
 from app.services.container import ServiceContainer
@@ -53,14 +46,11 @@ class GovernanceGraph:
         workflow.add_edge("api_ingestion", "request_normalization")
         workflow.add_edge("request_normalization", "agent_identity")
         workflow.add_conditional_edges("agent_identity", route_after_identity)
+        workflow.add_edge("risk_engine", "policy_engine")
         workflow.add_conditional_edges("policy_engine", route_after_policy)
-        workflow.add_conditional_edges("ai_firewall", route_after_firewall)
-        workflow.add_conditional_edges("risk_engine", route_after_risk)
-        workflow.add_conditional_edges("budget_engine", route_after_budget)
-        workflow.add_conditional_edges("compliance_engine", route_after_compliance)
-        workflow.add_edge("human_approval", "audit_engine")
-        workflow.add_conditional_edges("audit_engine", route_after_audit)
-        workflow.add_edge("enterprise_execution", "explainability_node")
+        workflow.add_conditional_edges("human_approval", route_after_human_approval)
+        workflow.add_edge("enterprise_execution", "audit_engine")
+        workflow.add_edge("audit_engine", "explainability_node")
         workflow.add_edge("explainability_node", "response_builder")
         workflow.add_edge("response_builder", END)
         return workflow.compile()
@@ -73,9 +63,9 @@ class GovernanceGraph:
         workflow.add_node("explainability_node", build_explainability_node(self.services, self.event_sink))
         workflow.add_node("response_builder", build_response_builder_node(self.services, self.event_sink))
         workflow.set_entry_point("human_approval")
-        workflow.add_edge("human_approval", "audit_engine")
-        workflow.add_conditional_edges("audit_engine", route_after_audit)
-        workflow.add_edge("enterprise_execution", "explainability_node")
+        workflow.add_conditional_edges("human_approval", route_after_human_approval)
+        workflow.add_edge("enterprise_execution", "audit_engine")
+        workflow.add_edge("audit_engine", "explainability_node")
         workflow.add_edge("explainability_node", "response_builder")
         workflow.add_edge("response_builder", END)
         return workflow.compile()
@@ -84,11 +74,8 @@ class GovernanceGraph:
         workflow.add_node("api_ingestion", build_api_ingestion_node(self.services, self.event_sink))
         workflow.add_node("request_normalization", build_request_normalization_node(self.services, self.event_sink))
         workflow.add_node("agent_identity", build_agent_identity_node(self.services, self.event_sink))
-        workflow.add_node("policy_engine", build_policy_engine_node(self.services, self.event_sink))
-        workflow.add_node("ai_firewall", build_ai_firewall_node(self.services, self.event_sink))
         workflow.add_node("risk_engine", build_risk_engine_node(self.services, self.event_sink))
-        workflow.add_node("budget_engine", build_budget_engine_node(self.services, self.event_sink))
-        workflow.add_node("compliance_engine", build_compliance_engine_node(self.services, self.event_sink))
+        workflow.add_node("policy_engine", build_policy_engine_node(self.services, self.event_sink))
         workflow.add_node("human_approval", build_human_approval_node(self.services, self.event_sink))
         workflow.add_node("audit_engine", build_audit_engine_node(self.services, self.event_sink))
         workflow.add_node("enterprise_execution", build_enterprise_execution_node(self.services, self.event_sink))

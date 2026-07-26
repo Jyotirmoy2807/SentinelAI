@@ -9,6 +9,7 @@ def build_policy_engine_node(services: ServiceContainer, event_sink: EventSink |
             policy = services.policies.evaluate(
                 current_state.get("identity", {}),
                 current_state.get("normalized_execution", {}),
+                current_state.get("risk", {}),
             )
             return {"policy": policy}
 
