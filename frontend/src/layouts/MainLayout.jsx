@@ -1,14 +1,18 @@
 import { Bell, Menu, Search, ShieldCheck } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { navigationItems } from "../constants/navigation.js";
 import { useUiStore } from "../store/uiStore.js";
+
+const componentScrollRoutes = ["/agents", "/governance", "/enterprise", "/approvals", "/audit"];
 
 export function MainLayout() {
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const location = useLocation();
+  const componentScroll = componentScrollRoutes.some((path) => location.pathname.startsWith(path));
 
   return (
-    <div className="min-w-0 overflow-x-hidden bg-surface text-ink">
+    <div className="h-screen min-w-0 overflow-hidden bg-surface text-ink">
       <aside
         className={`fixed inset-y-0 left-0 z-30 border-r border-line bg-white transition-all duration-200 ${
           sidebarOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full lg:w-20 lg:translate-x-0"
@@ -46,8 +50,8 @@ export function MainLayout() {
         </nav>
       </aside>
       {sidebarOpen ? <button aria-label="Close sidebar overlay" className="fixed inset-0 z-20 bg-ink/20 lg:hidden" onClick={toggleSidebar} /> : null}
-      <div className={`min-w-0 overflow-x-hidden transition-all ${sidebarOpen ? "lg:pl-72" : "lg:pl-20"}`}>
-        <header className="sticky top-0 z-20 flex h-16 min-w-0 items-center justify-between gap-3 border-b border-line bg-white/95 px-4 backdrop-blur sm:px-6">
+      <div className={`flex h-screen min-w-0 flex-col overflow-hidden transition-all ${sidebarOpen ? "lg:pl-72" : "lg:pl-20"}`}>
+        <header className="z-20 flex h-16 shrink-0 min-w-0 items-center justify-between gap-3 border-b border-line bg-white/95 px-4 backdrop-blur sm:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button aria-label="Toggle sidebar" className="rounded-md p-2 hover:bg-slate-100" onClick={toggleSidebar}>
               <Menu className="h-5 w-5" />
@@ -65,8 +69,10 @@ export function MainLayout() {
             <div className="h-9 w-9 rounded-full bg-slate-900 text-center text-sm font-semibold leading-9 text-white">GA</div>
           </div>
         </header>
-        <main className="mx-auto min-w-0 max-w-[1500px] overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6">
-          <Outlet />
+        <main className={`min-h-0 flex-1 overflow-x-hidden ${componentScroll ? "overflow-hidden" : "overflow-y-auto"}`}>
+          <div className={`mx-auto box-border min-w-0 max-w-[1500px] px-3 py-4 sm:px-6 sm:py-6 ${componentScroll ? "h-full" : ""}`}>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

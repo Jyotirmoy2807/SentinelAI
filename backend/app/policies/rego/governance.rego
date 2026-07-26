@@ -153,27 +153,55 @@ policy_matches contains policy if {
 policy_matches contains policy if {
   input.identity.department == "Sales"
   amount := input.normalizedExecution.amount
+  amount > 2000.0
+  policy := {"decision": "DENY", "policy_id": "budget_sales_limit_transaction_limit", "priority": 899960, "reason": "Sales-Limit transaction limit exceeded."}
+}
+
+policy_matches contains policy if {
+  input.identity.department == "Sales"
+  amount := input.normalizedExecution.amount
+  amount + 0.0 > 1000.0
+  policy := {"decision": "DENY", "policy_id": "budget_sales_limit_daily_limit", "priority": 899959, "reason": "Sales-Limit daily limit exceeded."}
+}
+
+policy_matches contains policy if {
+  input.identity.department == "Sales"
+  amount := input.normalizedExecution.amount
+  amount + 0.0 > 10000.0
+  policy := {"decision": "DENY", "policy_id": "budget_sales_limit_monthly_limit", "priority": 899958, "reason": "Sales-Limit monthly limit exceeded."}
+}
+
+policy_matches contains policy if {
+  input.identity.department == "Sales"
+  amount := input.normalizedExecution.amount
+  amount >= 300.0
+  policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_sales_limit_approval_threshold", "priority": 899957, "reason": "Sales-Limit approval threshold reached."}
+}
+
+policy_matches contains policy if {
+  input.identity.department == "Sales"
+  amount := input.normalizedExecution.amount
   amount > 5000.0
-  policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_transaction_limit", "priority": 899960, "reason": "Sales-Refunds transaction limit exceeded."}
+  policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_transaction_limit", "priority": 899950, "reason": "Sales-Refunds transaction limit exceeded."}
 }
 
 policy_matches contains policy if {
   input.identity.department == "Sales"
   amount := input.normalizedExecution.amount
   amount + 0.0 > 15000.0
-  policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_daily_limit", "priority": 899959, "reason": "Sales-Refunds daily limit exceeded."}
+  policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_daily_limit", "priority": 899949, "reason": "Sales-Refunds daily limit exceeded."}
 }
 
 policy_matches contains policy if {
   input.identity.department == "Sales"
   amount := input.normalizedExecution.amount
   amount + 0.0 > 150000.0
-  policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_monthly_limit", "priority": 899958, "reason": "Sales-Refunds monthly limit exceeded."}
+  policy := {"decision": "DENY", "policy_id": "budget_sales_refunds_monthly_limit", "priority": 899948, "reason": "Sales-Refunds monthly limit exceeded."}
 }
 
 policy_matches contains policy if {
   input.identity.department == "Sales"
   amount := input.normalizedExecution.amount
   amount >= 750.0
-  policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_sales_refunds_approval_threshold", "priority": 899957, "reason": "Sales-Refunds approval threshold reached."}
+  policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "budget_sales_refunds_approval_threshold", "priority": 899947, "reason": "Sales-Refunds approval threshold reached."}
 }

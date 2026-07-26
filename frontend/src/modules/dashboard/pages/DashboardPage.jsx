@@ -27,7 +27,7 @@ export function DashboardPage() {
   ];
 
   return (
-    <div>
+    <div className="pb-10">
       <PageHeader
         title="Dashboard"
         description="High-level operational summary for SentinelAI governance runtime, policy deployment, approvals, and observability."
@@ -53,15 +53,15 @@ export function DashboardPage() {
         ))}
       </div>
       <div className="mt-6 grid min-w-0 gap-4 xl:grid-cols-2">
-        <Card>
+        <Card className="flex h-[620px] flex-col">
           <CardHeader title="Recent Executions" />
-          <CardBody>
+          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
             <DataTable columns={executionColumns} rows={data?.recent_executions || []} loading={isLoading} empty="No executions yet" />
           </CardBody>
         </Card>
-        <Card>
+        <Card className="flex h-[620px] flex-col">
           <CardHeader title="Recent Audit Events" />
-          <CardBody>
+          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
             <DataTable columns={auditColumns} rows={data?.recent_audit_events || []} loading={isLoading} empty="No audit events yet" />
           </CardBody>
         </Card>

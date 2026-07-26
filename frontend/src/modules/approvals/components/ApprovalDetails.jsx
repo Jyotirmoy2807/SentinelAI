@@ -6,19 +6,19 @@ import { formatDate } from "../../../utils/format.js";
 export function ApprovalDetails({ approval, comments, setComments, onApprove, onReject, response }) {
   if (!approval) {
     return (
-      <Card>
-        <CardBody>
+      <Card className="flex min-h-0 flex-col">
+        <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="text-sm text-slate-500">No approval selected</div>
         </CardBody>
       </Card>
     );
   }
   return (
-    <Card>
+    <Card className="flex min-h-0 flex-col">
       <CardHeader title={approval.approval_id} action={<StatusBadge status={approval.status} />}>
         {approval.request_id}
       </CardHeader>
-      <CardBody className="max-h-[calc(100vh-12rem)] space-y-5 overflow-y-auto overflow-x-hidden">
+      <CardBody className="min-h-0 flex-1 space-y-5 overflow-y-auto overflow-x-hidden">
         <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <Info label="Agent" value={approval.agent_name} />
           <Info label="Passport" value={approval.passport_id} />

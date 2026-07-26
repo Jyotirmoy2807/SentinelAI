@@ -36,14 +36,14 @@ export function ApprovalCenterPage() {
   }
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title="Human Approval Center"
         description="Pending and completed governance reviews with the context needed to resume or deny paused workflows."
       />
-      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">
-        <Card>
-          <CardBody>
+      <div className="grid min-h-0 min-w-0 flex-1 gap-5 overflow-y-auto overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_minmax(320px,440px)] xl:overflow-hidden">
+        <Card className="flex min-h-0 flex-col">
+          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
             <DataTable
               columns={columns}
               rows={data}

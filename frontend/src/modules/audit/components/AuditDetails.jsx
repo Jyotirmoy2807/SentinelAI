@@ -5,17 +5,17 @@ import { formatDate } from "../../../utils/format.js";
 export function AuditDetails({ detail }) {
   if (!detail) {
     return (
-      <Card>
-        <CardBody>
+      <Card className="flex min-h-0 flex-col">
+        <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="text-sm text-slate-500">Select an audit record to inspect its governance trail.</div>
         </CardBody>
       </Card>
     );
   }
   return (
-    <Card>
+    <Card className="flex min-h-0 flex-col">
       <CardHeader title={detail.request_id} />
-      <CardBody className="max-h-[calc(100vh-12rem)] space-y-5 overflow-y-auto overflow-x-hidden">
+      <CardBody className="min-h-0 flex-1 space-y-5 overflow-y-auto overflow-x-hidden">
         <div>
           <div className="mb-2 text-xs font-semibold uppercase text-slate-400">Audit Timeline</div>
           <div className="space-y-3">

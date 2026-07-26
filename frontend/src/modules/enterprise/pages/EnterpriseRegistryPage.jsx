@@ -62,7 +62,7 @@ export function EnterpriseRegistryPage() {
   const detail = selected || data[0];
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title="Enterprise API Registry"
         description="Registered enterprise capabilities, adapter assignments, policy requirements, and service health posture."
@@ -73,15 +73,15 @@ export function EnterpriseRegistryPage() {
           </Button>
         }
       />
-      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)]">
-        <Card>
-          <CardBody>
+      <div className="grid min-h-0 min-w-0 flex-1 gap-5 overflow-y-auto overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] xl:overflow-hidden">
+        <Card className="flex min-h-0 flex-col">
+          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
             <DataTable columns={columns} rows={data} loading={isLoading} empty="No enterprise APIs registered" onRowClick={setSelected} />
           </CardBody>
         </Card>
-        <Card>
+        <Card className="flex min-h-0 flex-col">
           <CardHeader title={detail?.service_name || "API Details"} />
-          <CardBody className="max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto overflow-x-hidden">
+          <CardBody className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden">
             {detail ? (
               <>
                 <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">

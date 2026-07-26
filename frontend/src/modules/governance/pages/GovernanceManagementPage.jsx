@@ -25,6 +25,8 @@ export function GovernanceManagementPage() {
   const [active, setActive] = useState("governance");
   const [governanceModal, setGovernanceModal] = useState(null);
   const [budgetModal, setBudgetModal] = useState(null);
+  const [deployNotice, setDeployNotice] = useState("");
+  const latestDeployment = resources.deploy.data || resources.deployment.data;
 
   function submitGovernancePolicy(payload, setError) {
     const mutation = governanceModal ? resources.updateGovernancePolicy.mutateAsync({ id: governanceModal.id, payload }) : resources.createGovernancePolicy.mutateAsync(payload);
@@ -36,29 +38,41 @@ export function GovernanceManagementPage() {
     mutation.then(() => setBudgetModal(null)).catch((error) => setError(apiError(error)));
   }
 
+  function deployPolicies() {
+    setActive("deployment");
+    setDeployNotice("");
+    resources.deploy.reset();
+    resources.deploy
+      .mutateAsync()
+      .then((deployment) => {
+        setDeployNotice(deployment.status === "DEPLOYED" ? "Policies deployed successfully." : deployment.message || "Policy deployment completed.");
+      })
+      .catch((error) => setDeployNotice(apiError(error)));
+  }
+
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title="Governance Management"
         description="Manage JSON-sourced governance and budget policies, generate one OPA governance bundle, and track deployment history."
         action={
-          <Button onClick={() => resources.deploy.mutate()}>
+          <Button onClick={deployPolicies} disabled={resources.deploy.isPending}>
             <Play className="h-4 w-4" />
-            Deploy Policies
+            {resources.deploy.isPending ? "Deploying" : "Deploy Policies"}
           </Button>
         }
       />
-      <Card>
+      <Card className="flex min-h-0 flex-1 flex-col">
         <CardHeader title="Governance Controls" />
-        <CardBody>
+        <CardBody className="flex min-h-0 flex-1 flex-col">
           <Tabs tabs={tabs} active={active} onChange={setActive} />
-          <div className="mt-5">
+          <div className="mt-5 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2">
             {active === "governance" ? <GovernancePolicies resources={resources} onCreate={() => setGovernanceModal(false)} onEdit={setGovernanceModal} /> : null}
             {active === "budgets" ? <BudgetPolicies resources={resources} onCreate={() => setBudgetModal(false)} onEdit={setBudgetModal} /> : null}
             {active === "builder" ? <PolicyBuilder onCreate={() => setGovernanceModal(false)} lookups={resources.lookups.data} /> : null}
             {active === "configuration" ? <GovernanceConfiguration settings={resources.settings.data} lookups={resources.lookups.data} /> : null}
             {active === "history" ? <PolicyHistory resources={resources} /> : null}
-            {active === "deployment" ? <DeploymentStatus deployment={resources.deployment.data} onDeploy={() => resources.deploy.mutate()} /> : null}
+            {active === "deployment" ? <DeploymentStatus deployment={latestDeployment} onDeploy={deployPolicies} pending={resources.deploy.isPending} notice={deployNotice} error={resources.deploy.error ? apiError(resources.deploy.error) : ""} /> : null}
           </div>
         </CardBody>
       </Card>
@@ -214,7 +228,7 @@ function PolicyHistory({ resources }) {
   );
 }
 
-function DeploymentStatus({ deployment, onDeploy }) {
+function DeploymentStatus({ deployment, onDeploy, pending, notice, error }) {
   const rows = deployment
     ? [
         { id: "deployment", label: "Deployment", value: deployment.deployment_id },
@@ -227,13 +241,14 @@ function DeploymentStatus({ deployment, onDeploy }) {
       ]
     : [];
   return (
-    <SectionHeader title="Deployment Status" description="The backend generates governance.rego, runs opa fmt and opa check, then updates the watched OPA policy file." actionLabel="Deploy Now" onAction={onDeploy}>
+    <SectionHeader title="Deployment Status" description="The backend generates governance.rego, validates it, then updates the watched OPA policy file." actionLabel={pending ? "Deploying" : "Deploy Now"} onAction={onDeploy} actionDisabled={pending}>
+      {notice ? <div className={`mb-4 rounded-md px-3 py-2 text-sm ${error ? "border border-red-200 bg-red-50 text-danger" : "border border-emerald-200 bg-emerald-50 text-emerald-700"}`}>{notice}</div> : null}
       <DataTable columns={[{ key: "label", header: "Item" }, { key: "value", header: "Value" }]} rows={rows} empty="No deployment has been recorded" />
     </SectionHeader>
   );
 }
 
-function SectionHeader({ title, description, actionLabel, onAction, children }) {
+function SectionHeader({ title, description, actionLabel, onAction, actionDisabled, children }) {
   return (
     <div>
       <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-3">
@@ -242,7 +257,7 @@ function SectionHeader({ title, description, actionLabel, onAction, children }) 
           <p className="break-words text-sm text-slate-500">{description}</p>
         </div>
         {onAction ? (
-          <Button onClick={onAction}>
+          <Button onClick={onAction} disabled={actionDisabled}>
             <Plus className="h-4 w-4" />
             {actionLabel}
           </Button>

@@ -5,19 +5,19 @@ import { formatDate } from "../../../utils/format.js";
 export function AgentDetails({ agent }) {
   if (!agent) {
     return (
-      <Card>
-        <CardBody>
+      <Card className="flex min-h-0 flex-col">
+        <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <div className="text-sm text-slate-500">Select an agent to inspect passport, API access, OPA profile, and activity.</div>
         </CardBody>
       </Card>
     );
   }
   return (
-    <Card>
+    <Card className="flex min-h-0 flex-col">
       <CardHeader title={agent.name}>
         {agent.passport_id}
       </CardHeader>
-      <CardBody className="max-h-[calc(100vh-12rem)] space-y-5 overflow-y-auto overflow-x-hidden">
+      <CardBody className="min-h-0 flex-1 space-y-5 overflow-y-auto overflow-x-hidden">
         <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <Info label="Department" value={agent.department} />
           <Info label="Owner" value={agent.owner} />

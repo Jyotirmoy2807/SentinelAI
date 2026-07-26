@@ -27,14 +27,14 @@ export function AuditPage() {
   const currentDetail = detail.data || (rows[0]?.request_id === requestId ? detail.data : null);
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title="Audit & Explainability"
         description="Splunk-compatible governance events, decision trail, request detail, execution evidence, and reasoning context."
       />
-      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,460px)]">
-        <Card>
-          <CardBody>
+      <div className="grid min-h-0 min-w-0 flex-1 gap-5 overflow-y-auto overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_minmax(320px,460px)] xl:overflow-hidden">
+        <Card className="flex min-h-0 flex-col">
+          <CardBody className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
             <DataTable
               columns={columns}
               rows={rows}
