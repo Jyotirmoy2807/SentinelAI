@@ -226,6 +226,7 @@ class PolicyService:
             "enabled",
             "conditions",
             "reason",
+            "applicable_agents",
             "department",
             "daily_limit",
             "monthly_limit",

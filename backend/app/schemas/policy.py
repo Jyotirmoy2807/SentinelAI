@@ -21,6 +21,8 @@ class GovernancePolicyBase(ORMModel):
     enabled: bool = True
     conditions: list[PolicyCondition] = Field(default_factory=list)
     reason: str = ""
+    # Empty list = global (all agents). Non-empty = only listed agent passport IDs.
+    applicable_agents: list[str] = Field(default_factory=list)
 
 
 class GovernancePolicyCreate(GovernancePolicyBase):
@@ -36,6 +38,7 @@ class GovernancePolicyUpdate(ORMModel):
     enabled: bool | None = None
     conditions: list[PolicyCondition] | None = None
     reason: str | None = None
+    applicable_agents: list[str] | None = None
 
 
 class GovernancePolicyRead(GovernancePolicyBase):

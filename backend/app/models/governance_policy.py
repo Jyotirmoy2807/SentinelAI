@@ -19,5 +19,9 @@ class GovernancePolicy(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     conditions: Mapped[list[dict]] = mapped_column(JSON, default=list)
     reason: Mapped[str] = mapped_column(String(1000), default="")
+    # Empty list means global (applies to all agents).
+    # Non-empty list means scoped: only agents whose policy_groups includes this policy_id are affected.
+    applicable_agents: Mapped[list[str]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+

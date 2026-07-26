@@ -292,8 +292,9 @@ function IconAction({ icon: Icon, label, danger, ...props }) {
 }
 
 function apiError(error) {
-  const detail = error.response?.data?.detail;
-  if (Array.isArray(detail)) return detail.map((item) => item.msg || item).join(", ");
-  if (detail) return String(detail);
-  return error.message || "Unable to save policy";
+  const detail = error?.response?.data?.detail;
+  if (Array.isArray(detail)) return detail.map((item) => item.msg || JSON.stringify(item)).join(", ");
+  if (detail && typeof detail === "string") return detail;
+  if (detail) return JSON.stringify(detail);
+  return error?.response?.data?.message || error?.message || "An unexpected error occurred";
 }

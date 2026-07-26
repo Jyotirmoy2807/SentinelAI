@@ -70,3 +70,9 @@ def _migrate_prototype_schema() -> None:
             connection.execute(text("""UPDATE agents SET policy_groups = '["destructive_action_deny"]' WHERE passport_id = 'AGENT-MER-003'"""))
             connection.execute(text("""UPDATE agents SET policy_groups = '["high_risk_approval"]', budget_profile = 'HR-Travel' WHERE passport_id = 'AGENT-BOOK-004'"""))
             connection.execute(text("""UPDATE agents SET policy_groups = '["blocked_agent_deny"]' WHERE passport_id = 'AGENT-IT-005'"""))
+
+        # Add applicable_agents column to governance_policies if missing (new in this version)
+        if "governance_policies" in table_names:
+            gp_columns = {column["name"] for column in inspector.get_columns("governance_policies")}
+            if "applicable_agents" not in gp_columns:
+                connection.execute(text("ALTER TABLE governance_policies ADD COLUMN applicable_agents JSON DEFAULT '[]'"))

@@ -57,6 +57,11 @@ class PolicyRegoGenerator:
 
     def _governance_policy_rule(self, policy: Any) -> list[str]:
         body = self._condition_lines(policy.conditions or [])
+
+        # Always scope to agents that have opted in via their policy_groups.
+        # The agent's policy_groups list is the single source of truth for which policies apply.
+        body = [f'"{policy.policy_id}" in input.identity.policyGroups', *body]
+
         payload = self._policy_payload(
             policy_id=policy.policy_id,
             decision=policy.decision,

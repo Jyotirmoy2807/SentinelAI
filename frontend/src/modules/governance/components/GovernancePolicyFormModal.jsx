@@ -216,8 +216,18 @@ function coerceValue(value) {
 }
 
 function formatError(error) {
-  if (Array.isArray(error)) return error.map((item) => item.msg || item).join(", ");
-  return String(error);
+  if (!error) return "";
+  if (typeof error === "string") return error;
+  // FastAPI validation errors: { detail: [{msg, loc, type}, ...] }
+  if (error?.detail) {
+    if (Array.isArray(error.detail)) return error.detail.map((item) => item.msg || String(item)).join(", ");
+    return String(error.detail);
+  }
+  // Array of validation error objects
+  if (Array.isArray(error)) return error.map((item) => item.msg || String(item)).join(", ");
+  // Fallback: try to extract a message
+  if (error?.message) return error.message;
+  return JSON.stringify(error);
 }
 
 function buildConditionValueOptions(lookups) {

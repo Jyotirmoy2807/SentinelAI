@@ -174,7 +174,7 @@ function NodeDetails({ node, status, events }) {
           <Metric label="Events" value={events.length} />
           <Metric label="Last Latency" value={formatDuration(latestEvent?.duration_ms)} />
         </div>
-        <pre className="json-panel mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden rounded-md bg-slate-50 p-3 text-xs text-slate-700">
+        <pre className="json-panel mt-4 max-h-[340px] overflow-y-auto overflow-x-hidden rounded-md bg-slate-50 p-3 text-xs text-slate-700">
           {JSON.stringify(latestEvent?.payload || {}, null, 2)}
         </pre>
       </CardBody>

@@ -18,29 +18,28 @@ selected_policy := ranked_matches[keys[0]] if {
 }
 
 policy_matches contains policy if {
+  "blocked_agent_deny" in input.identity.policyGroups
   input.identity.status != "ACTIVE"
   policy := {"decision": "DENY", "policy_id": "blocked_agent_deny", "priority": 990000, "reason": "Agent Passport is not active."}
 }
 
 policy_matches contains policy if {
+  "destructive_action_deny" in input.identity.policyGroups
   input.normalizedExecution.operation == "delete_database"
   policy := {"decision": "DENY", "policy_id": "destructive_action_deny", "priority": 980000, "reason": "Destructive database operations are forbidden."}
 }
 
 policy_matches contains policy if {
+  "high_risk_approval" in input.identity.policyGroups
   input.risk.score >= 70
   policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "high_risk_approval", "priority": 880000, "reason": "High NIST RMF risk score requires human approval."}
 }
 
 policy_matches contains policy if {
+  "finance_amount_approval" in input.identity.policyGroups
   input.identity.department == "Finance"
   input.normalizedExecution.amount >= 5000
   policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "finance_amount_approval", "priority": 870000, "reason": "Finance transaction amount requires governance approval."}
-}
-
-policy_matches contains policy if {
-  true
-  policy := {"decision": "REQUIRE_APPROVAL", "policy_id": "human_pol", "priority": 100, "reason": "I said so"}
 }
 
 policy_matches contains policy if {
