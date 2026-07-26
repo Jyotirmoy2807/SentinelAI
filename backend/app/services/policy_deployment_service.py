@@ -52,7 +52,9 @@ class PolicyDeploymentService:
             shutil.move(str(draft), str(target))
             status = "DEPLOYED"
             message = self._deployment_message(fmt_message, check_message)
-            reload_status = "WATCHED_FILE_REPLACED"
+            reload_status = "OPA_RESTARTED"
+            from app.core.opa_runner import restart_opa_server
+            restart_opa_server(opa_cli_path=self.opa_cli_path, bundle_path=str(self.policy_directory))
         else:
             checksum = hashlib.sha256(generated_rego.encode("utf-8")).hexdigest()
             draft.unlink(missing_ok=True)

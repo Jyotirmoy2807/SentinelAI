@@ -25,9 +25,21 @@ app.add_middleware(
 )
 
 
+from app.core.opa_runner import start_opa_server, stop_opa_server
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     init_database()
+    start_opa_server(
+        opa_cli_path=settings.opa_cli_path,
+        bundle_path=settings.opa_policy_bundle_path,
+    )
+
+
+@app.on_event("shutdown")
+def on_shutdown() -> None:
+    stop_opa_server()
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
