@@ -1,11 +1,18 @@
 import { useMemo, useRef, useState } from "react";
 import { executionService } from "../services/executionService.js";
+import { useUiStore } from "../../../store/uiStore.js";
 
-export function useLiveExecution() {
+export function useLiveExecution(isSimulation = false) {
   const socketRef = useRef(null);
-  const [events, setEvents] = useState([]);
-  const [finalResponse, setFinalResponse] = useState(null);
-  const [rawState, setRawState] = useState(null);
+  const storeKey = isSimulation ? "simulationState" : "liveState";
+  const stateData = useUiStore((state) => state[storeKey]);
+  const setExecutionState = useUiStore((state) => state.setExecutionState);
+  const resetExecutionState = useUiStore((state) => state.resetExecutionState);
+
+  const events = stateData?.events || [];
+  const finalResponse = stateData?.finalResponse || null;
+  const rawState = stateData?.rawState || null;
+
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,9 +25,7 @@ export function useLiveExecution() {
 
   function start(request, simulation = false) {
     socketRef.current?.close();
-    setEvents([]);
-    setFinalResponse(null);
-    setRawState(null);
+    setExecutionState(isSimulation, { events: [], finalResponse: null, rawState: null });
     setError("");
     const socket = new WebSocket(executionService.liveSocketUrl());
     socketRef.current = socket;
@@ -31,11 +36,15 @@ export function useLiveExecution() {
     socket.onmessage = (message) => {
       const payload = JSON.parse(message.data);
       if (payload.type === "node_event") {
-        setEvents((current) => [...current, payload.event]);
+        setExecutionState(isSimulation, {
+          events: [...(useUiStore.getState()[storeKey].events || []), payload.event]
+        });
       }
       if (payload.type === "final") {
-        setFinalResponse(payload.response);
-        setRawState(payload.state);
+        setExecutionState(isSimulation, {
+          finalResponse: payload.response,
+          rawState: payload.state
+        });
         setConnected(false);
         socket.close();
       }
@@ -47,6 +56,13 @@ export function useLiveExecution() {
     socket.onclose = () => setConnected(false);
   }
 
+  function reset() {
+    socketRef.current?.close();
+    resetExecutionState(isSimulation);
+    setConnected(false);
+    setError("");
+  }
+
   return {
     events,
     finalResponse,
@@ -54,6 +70,7 @@ export function useLiveExecution() {
     connected,
     error,
     nodeStatuses,
-    start
+    start,
+    reset
   };
 }
