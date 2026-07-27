@@ -1,4 +1,4 @@
-# SentinelAI v2
+# SentinelAI 
 
 SentinelAI is a prototype enterprise AI governance platform that acts as a secure control layer between autonomous AI agents and enterprise APIs. Instead of allowing agents to invoke enterprise services directly, every request passes through a centralized governance pipeline where it is authenticated, evaluated using Open Policy Agent (OPA), assessed through a NIST RMF-inspired risk engine, audited using Splunk-compatible structured events, and finally approved, escalated, or denied.
 
