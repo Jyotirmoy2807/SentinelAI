@@ -111,7 +111,6 @@ frontend/
     │   ├── Simulation
     │   └── Settings
 │
-context/
 docs/
 ```
 
