@@ -43,6 +43,12 @@ policy_matches contains policy if {
 }
 
 policy_matches contains policy if {
+  "POL-1" in input.identity.policyGroups
+  true
+  policy := {"decision": "DENY", "policy_id": "POL-1", "priority": 100, "reason": "For testing"}
+}
+
+policy_matches contains policy if {
   input.identity.department == "Finance"
   amount := input.normalizedExecution.amount
   amount > 10000.0
